@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2800" height="1690" viewBox="0 0 2800 1690">
+<rect width="100%" height="100%" fill="white"/>
+<text x="70" y="70" font-family="Segoe UI,Arial,sans-serif" font-size="40" font-weight="700" fill="#0f172a" text-anchor="start">AI inference | Matched observations and accepted results</text>
+<text x="70" y="131" font-family="Segoe UI,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569" text-anchor="start">Each team is a separate logical race. NestJS owns the match and scoring; FastAPI performs inference and pushes completed results.</text>
+<polyline points="560,345 850,345" fill="none" stroke="#475569" stroke-width="3"/>
+<polygon points="850,345 836.0,339.0 836.0,351.0" fill="#475569"/>
+<polyline points="1450,345 1900,345" fill="none" stroke="#7c3aed" stroke-width="3" stroke-dasharray="10 7"/>
+<polygon points="1900,345 1886.0,339.0 1886.0,351.0" fill="#7c3aed"/>
+<polyline points="2250,480 2250,800" fill="none" stroke="#7c3aed" stroke-width="3" stroke-dasharray="10 7"/>
+<polygon points="2250,800 2256.0,786.0 2244.0,786.0" fill="#7c3aed"/>
+<polyline points="1900,930 1450,930" fill="none" stroke="#7c3aed" stroke-width="3" stroke-dasharray="10 7"/>
+<polygon points="1450,930 1464.0,936.0 1464.0,924.0" fill="#7c3aed"/>
+<polyline points="850,930 560,930" fill="none" stroke="#15803d" stroke-width="3"/>
+<polygon points="560,930 574.0,936.0 574.0,924.0" fill="#15803d"/>
+<polyline points="1150,1080 1150,1250" fill="none" stroke="#be123c" stroke-width="3" stroke-dasharray="10 7"/>
+<polygon points="1150,1250 1156.0,1236.0 1144.0,1236.0" fill="#be123c"/>
+<rect x="80" y="220" width="480" height="260" rx="14" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+<text x="98" y="262" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#0f172a" text-anchor="start">1  Freeze checkpoint input</text>
+<text x="98" y="305" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Canonical team canvas V + hint state H</text>
+<text x="98" y="333" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Worker renders accepted operations</text>
+<text x="98" y="361" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Common scheduled checkpoint</text>
+<text x="98" y="389" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Bind match / round / team / attempt</text>
+<text x="98" y="417" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Image hash + renderer/config revisions</text>
+<rect x="850" y="220" width="600" height="260" rx="14" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+<text x="868" y="262" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#0f172a" text-anchor="start">2  Match engine waits and reserves</text>
+<text x="868" y="306" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Check every active human guesser:</text>
+<text x="868" y="335" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">ACK rendered canvas &gt;= V and hints &gt;= H</text>
+<text x="868" y="364" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Reserve the attempt once in match RAM</text>
+<text x="868" y="393" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Then release the frozen input to the AI</text>
+<text x="868" y="422" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Lag or disconnect enters team grace</text>
+<text x="868" y="451" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">ACK is not conscious human perception</text>
+<rect x="1900" y="220" width="700" height="260" rx="14" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+<text x="1918" y="262" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#0f172a" text-anchor="start">3  Admit an authenticated job</text>
+<text x="1918" y="306" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">FastAPI validates bounded Pydantic payloads</text>
+<text x="1918" y="335" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Accept job ID and reserved attempt identity</text>
+<text x="1918" y="364" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Return accepted job identity promptly</text>
+<text x="1918" y="393" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Enforce queue capacity and per-job deadline</text>
+<text x="1918" y="422" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Keep the game loop independent of GPU work</text>
+<rect x="1900" y="800" width="700" height="280" rx="14" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+<text x="1918" y="842" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#0f172a" text-anchor="start">4  Run bounded GPU inference</text>
+<text x="1918" y="886" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Keep weights loaded; fair scheduling across teams</text>
+<text x="1918" y="915" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">One loaded guesser can serve many logical races</text>
+<text x="1918" y="944" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Guesser and referee use separate task adapters</text>
+<text x="1918" y="973" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Record capture, queue, start, finish and receipt</text>
+<text x="1918" y="1002" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Push terminal results; retry until acknowledged</text>
+<rect x="850" y="800" width="600" height="280" rx="14" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+<text x="868" y="842" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#0f172a" text-anchor="start">5  Validate in the NestJS engine</text>
+<text x="868" y="885" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Current server instance + round generation</text>
+<text x="868" y="913" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Team active; no earlier human solve</text>
+<text x="868" y="941" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Expected job / V / H / hash + deadline</text>
+<text x="868" y="969" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Reserved attempt valid and not applied</text>
+<text x="868" y="997" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Serialize with human guesses; update RAM</text>
+<text x="868" y="1025" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Older checkpoint V can remain valid</text>
+<rect x="80" y="800" width="480" height="280" rx="14" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+<text x="98" y="842" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#0f172a" text-anchor="start">6  Publish permitted outcomes</text>
+<text x="98" y="885" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Guesser: server checks the secret target</text>
+<text x="98" y="913" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Publish progress; hide AI guess text</text>
+<text x="98" y="941" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Referee: public advisory warning only</text>
+<text x="98" y="969" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Private text/crops remain team-scoped</text>
+<text x="98" y="997" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Late AI cannot undo a human solve</text>
+<text x="98" y="1025" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Guesser outage: round-wide bonus off</text>
+<rect x="80" y="1250" width="480" height="240" rx="14" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="98" y="1292" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#0f172a" text-anchor="start">Permitted model input</text>
+<text x="98" y="1335" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Canonical image + allowed hints</text>
+<text x="98" y="1363" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">No secret target or human guesses</text>
+<text x="98" y="1391" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">No private opposing canvas</text>
+<text x="98" y="1419" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Models cannot read the game database</text>
+<text x="98" y="1447" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Evaluation labels stay outside inference</text>
+<rect x="850" y="1250" width="600" height="240" rx="14" fill="#ffe4e6" stroke="#be123c" stroke-width="2"/>
+<text x="868" y="1292" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#0f172a" text-anchor="start">Rejected or unavailable</text>
+<text x="868" y="1335" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Wrong instance/round, duplicate, or expired</text>
+<text x="868" y="1363" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Finished / forfeited team: no score change</text>
+<text x="868" y="1391" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Canceled work is not an incorrect AI guess</text>
+<text x="868" y="1419" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">A failed required attempt is unavailable</text>
+<text x="868" y="1447" font-family="Segoe UI,Arial,sans-serif" font-size="20" font-weight="400" fill="#334155" text-anchor="start">Return idempotent result acknowledgement</text>
+<rect x="1900" y="1250" width="700" height="240" rx="14" fill="#f1f5f9" stroke="#64748b" stroke-width="2"/>
+<text x="1918" y="1292" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#0f172a" text-anchor="start">Model candidates | pilot required</text>
+<text x="1918" y="1336" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Guesser: Qwen/Qwen3-VL-2B-Instruct</text>
+<text x="1918" y="1365" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Referee evidence: microsoft/Florence-2-base</text>
+<text x="1918" y="1394" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">OCR regions do not prove a written clue is illegal</text>
+<text x="1918" y="1423" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Incidental writing on objects remains permitted</text>
+<text x="1918" y="1452" font-family="Segoe UI,Arial,sans-serif" font-size="21" font-weight="400" fill="#334155" text-anchor="start">Measure accuracy, region usefulness and tail latency</text>
+<rect x="618.0" y="303" width="174" height="32" fill="white"/>
+<text x="705" y="325" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="400" fill="#475569" text-anchor="middle">Frozen input V / H</text>
+<rect x="1543.0" y="303" width="264" height="32" fill="white"/>
+<text x="1675" y="325" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="400" fill="#7c3aed" text-anchor="middle">Reserved job + input identity</text>
+<rect x="2315.0" y="624" width="170" height="32" fill="white"/>
+<text x="2400" y="646" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="400" fill="#7c3aed" text-anchor="middle">Bounded GPU job</text>
+<rect x="1564.5" y="888" width="221" height="32" fill="white"/>
+<text x="1675" y="910" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="400" fill="#7c3aed" text-anchor="middle">Push result / retry / ACK</text>
+<rect x="632.5" y="888" width="145" height="32" fill="white"/>
+<text x="705" y="910" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="400" fill="#15803d" text-anchor="middle">Accepted once</text>
+<rect x="1218.5" y="1144" width="183" height="32" fill="white"/>
+<text x="1310" y="1166" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="400" fill="#be123c" text-anchor="middle">Reject / unavailable</text>
+<text x="70" y="1644" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="400" fill="#475569" text-anchor="start">Validate the frozen job identity, not the latest canvas version. A new server instance rejects old jobs; live events are ordered in match RAM.</text>
+</svg>

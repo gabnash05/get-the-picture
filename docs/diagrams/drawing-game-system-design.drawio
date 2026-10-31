@@ -1,0 +1,317 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="system-overview" name="01 - High-level architecture">
+    <mxGraphModel dx="2800" dy="1840" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2800" pageHeight="1840" math="0" shadow="0" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Team drawing game | High-level architecture" style="text;html=0;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;fontFamily=Segoe UI;fontSize=40;fontColor=#0f172a;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="70" y="30" width="2660" height="60" />
+        </mxCell>
+        <mxCell id="subtitle" value="PROPOSED BASELINE  /  Next.js + NestJS + FastAPI  /  One active game process  /  Live match state in RAM" style="text;html=0;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;fontFamily=Segoe UI;fontSize=22;fontColor=#475569;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="70" y="109" width="2660" height="42" />
+        </mxCell>
+        <mxCell id="play" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;exitX=1.0;exitY=0.375;exitPerimeter=0;entryX=0.0;entryY=0.32142857142857145;entryPerimeter=0;startArrow=block;startFill=1;" edge="1" parent="1" source="browser" target="game">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="web" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;startArrow=block;startFill=1;" edge="1" parent="1" source="browser" target="next">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="api" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;exitX=1.0;exitY=0.43478260869565216;exitPerimeter=0;entryX=0.0;entryY=0.8571428571428571;entryPerimeter=0;startArrow=block;startFill=1;" edge="1" parent="1" source="next" target="game">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="820" y="800" />
+              <mxPoint x="820" y="460" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="saved" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;exitX=1.0;exitY=0.32142857142857145;exitPerimeter=0;entryX=0.0;entryY=0.34615384615384615;entryPerimeter=0;startArrow=block;startFill=1;" edge="1" parent="1" source="game" target="db">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="capture" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#7c3aed;exitX=0.38333333333333336;exitY=1.0;exitPerimeter=0;entryX=0.5111111111111111;entryY=0.0;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="game" target="render">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="jobs" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#7c3aed;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="render" target="ai">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="work" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#7c3aed;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.46;entryPerimeter=0;dashed=1;startArrow=block;startFill=1;" edge="1" parent="1" source="ai" target="models">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="complete" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#7c3aed;exitX=0.48717948717948717;exitY=0.0;exitPerimeter=0;entryX=0.9333333333333333;entryY=1.0;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="ai" target="game">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2000" y="580" />
+              <mxPoint x="1700" y="580" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="archive-events" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#7c3aed;exitX=0.11666666666666667;exitY=1.0;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="game" target="archive">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1210" y="550" />
+              <mxPoint x="1040" y="550" />
+              <mxPoint x="1040" y="1020" />
+              <mxPoint x="2100" y="1020" />
+              <mxPoint x="2100" y="1270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="archive-db" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#7c3aed;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=1.0;entryY=0.5769230769230769;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="archive" target="db">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2770" y="1270" />
+              <mxPoint x="2770" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="exports" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.0;entryY=0.9090909090909091;entryPerimeter=0;startArrow=block;startFill=1;" edge="1" parent="1" source="research" target="archive">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="290" y="1470" />
+              <mxPoint x="2050" y="1470" />
+              <mxPoint x="2050" y="1360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="metrics" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#b45309;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="models" target="trace">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="browser" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Players in browsers&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Next.js client / React / TypeScript&lt;br&gt;Canvas 2D + Pointer Events&lt;br&gt;Paint locally; send stroke batches&lt;br&gt;Render team canvas + shared hints&lt;br&gt;ACK rendered canvas + hint versions&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#d1fae5;strokeColor=#047857;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="220" width="420" height="240" />
+        </mxCell>
+        <mxCell id="game" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;NestJS game backend&lt;/div&gt;&lt;div style=&quot;font-size:21px;line-height:29px;margin-top:16px;&quot;&gt;Node.js + TypeScript + NestJS&lt;br&gt;Socket.IO gateway + HTTP controllers&lt;br&gt;RAM: canvas, clock, roles, scores&lt;br&gt;Serialized match events / dedupe / privacy&lt;br&gt;AI checkpoints + result validation&lt;br&gt;One active game process; many matches&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dbeafe;strokeColor=#1d4ed8;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=21;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1140" y="220" width="600" height="280" />
+        </mxCell>
+        <mxCell id="db" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;PostgreSQL | saved game data&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Match setup + finalized round results&lt;br&gt;Archived drawing events + AI attempts&lt;br&gt;Input artifacts + model/config versions&lt;br&gt;Prisma access through NestJS services&lt;br&gt;No SQL wait for live stroke delivery&lt;/div&gt;" style="shape=mxgraph.flowchart.database;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=40;strokeWidth=2;fillColor=#ede9fe;strokeColor=#7c3aed;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2190" y="220" width="540" height="260" />
+        </mxCell>
+        <mxCell id="next" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Next.js web application&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;App Router + TypeScript&lt;br&gt;Tailwind CSS + shadcn/ui&lt;br&gt;Lobby / game / saved replay screens&lt;br&gt;Guest sessions + room codes&lt;br&gt;Per-stroke drawing stays outside React&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dbeafe;strokeColor=#1d4ed8;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="700" width="420" height="230" />
+        </mxCell>
+        <mxCell id="render" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Canonical render workers&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Render accepted drawing operations&lt;br&gt;PNG/compression off game event loop&lt;br&gt;Snapshot hash + canvas/hint versions&lt;br&gt;AI release waits for render ACKs&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dbeafe;strokeColor=#1d4ed8;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1140" y="700" width="450" height="230" />
+        </mxCell>
+        <mxCell id="ai" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Python AI service&lt;/div&gt;&lt;div style=&quot;font-size:19px;line-height:27px;margin-top:16px;&quot;&gt;FastAPI + Pydantic contracts&lt;br&gt;Bounded admission / deadlines&lt;br&gt;POST jobs; push completions&lt;br&gt;Retry notifications; ACK job IDs&lt;br&gt;Authenticated internal-only link&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dbeafe;strokeColor=#1d4ed8;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1810" y="700" width="390" height="230" />
+        </mxCell>
+        <mxCell id="models" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Loaded GPU models&lt;/div&gt;&lt;div style=&quot;font-size:19px;line-height:27px;margin-top:16px;&quot;&gt;PyTorch + Transformers&lt;br&gt;Qwen3-VL-2B: guesser*&lt;br&gt;Florence-2-base: referee*&lt;br&gt;Loaded weights; fair scheduling&lt;br&gt;Separate logical jobs per team&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dbeafe;strokeColor=#1d4ed8;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2380" y="700" width="350" height="250" />
+        </mxCell>
+        <mxCell id="trace" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Metrics / logs&lt;/div&gt;&lt;div style=&quot;font-size:18px;line-height:26px;margin-top:16px;&quot;&gt;Draw latency, queues, reconnects&lt;br&gt;Langfuse optional; sanitized inputs&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#fef3c7;strokeColor=#b45309;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2380" y="990" width="350" height="140" />
+        </mxCell>
+        <mxCell id="research" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Sketch-focused comparison&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Python / pandas / notebooks&lt;br&gt;Authorized matched-sketch exports&lt;br&gt;No gameplay hints or AI handicap&lt;br&gt;Target correctness is primary&lt;br&gt;Timing secondary; explanations later&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#d1fae5;strokeColor=#047857;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="1160" width="420" height="250" />
+        </mxCell>
+        <mxCell id="modules" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Inside the NestJS backend&lt;/div&gt;&lt;div style=&quot;font-size:21px;line-height:29px;margin-top:16px;&quot;&gt;Rooms / teams / guest-session services&lt;br&gt;In-process match registry + match engines&lt;br&gt;Round lifecycle + scoring services&lt;br&gt;AI connector + rendered-view barrier&lt;br&gt;Prisma persistence + replay/export services&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#f1f5f9;strokeColor=#64748b;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=21;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1140" y="1160" width="630" height="250" />
+        </mxCell>
+        <mxCell id="archive" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Archive + export worker&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;NestJS-owned background module&lt;br&gt;Bounded RAM queue; batched SQL writes&lt;br&gt;Persist replay events and model inputs&lt;br&gt;Flush round events before finalization&lt;br&gt;Serve authorized replay / research API&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dbeafe;strokeColor=#1d4ed8;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2190" y="1160" width="540" height="220" />
+        </mxCell>
+        <mxCell id="policy" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Gameplay and privacy contract&lt;/div&gt;&lt;div style=&quot;font-size:21px;line-height:29px;margin-top:16px;&quot;&gt;Agreed team counts/sizes, including unequal teams; one rotating drawer, all others guess.&lt;br&gt;One team score on its first correct answer; all teams use the same prompt and hint clock.&lt;br&gt;Only drawers know the target; team canvases and AI guess text remain private until reveal.&lt;br&gt;Referee flags are public and advisory; private text and image crops stay team-scoped.&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#f1f5f9;strokeColor=#64748b;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=21;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="1540" width="1300" height="200" />
+        </mxCell>
+        <mxCell id="reliability" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Acceptance, reconnects and persistence&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Ordered RAM updates and live broadcast; PostgreSQL archival runs in the background.&lt;br&gt;Reconnects can resume live state while the game process is running.&lt;br&gt;Game process restart: void unfinished rounds; restore only committed saved results.&lt;br&gt;Team grace/forfeit and round-wide AI-outage bonus rules remain in effect.&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#f1f5f9;strokeColor=#64748b;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1530" y="1540" width="1200" height="200" />
+        </mxCell>
+        <mxCell id="play-label" value="Socket.IO / WSS" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#475569;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="742.0" y="268" width="156" height="32" />
+        </mxCell>
+        <mxCell id="web-label" value="HTTPS / UI" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#475569;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="334.5" y="564" width="111" height="32" />
+        </mxCell>
+        <mxCell id="api-label" value="HTTPS APIs" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#475569;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="602.0" y="758" width="116" height="32" />
+        </mxCell>
+        <mxCell id="saved-label" value="Setup / final results / history" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#475569;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1836.5" y="268" width="257" height="32" />
+        </mxCell>
+        <mxCell id="capture-label" value="Frozen state" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#7c3aed;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1423.5" y="579" width="123" height="32" />
+        </mxCell>
+        <mxCell id="jobs-label" value="Image + hints" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#7c3aed;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1631.5" y="773" width="137" height="32" />
+        </mxCell>
+        <mxCell id="work-label" value="Jobs / results" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#7c3aed;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2225.0" y="773" width="130" height="32" />
+        </mxCell>
+        <mxCell id="complete-label" value="Pushed completion + ACK" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#7c3aed;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1725.0" y="537" width="240" height="32" />
+        </mxCell>
+        <mxCell id="archive-events-label" value="Async event batches" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#7c3aed;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1444.5" y="978" width="191" height="32" />
+        </mxCell>
+        <mxCell id="archive-db-label" value="Batched writes" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#7c3aed;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2588.5" y="579" width="143" height="32" />
+        </mxCell>
+        <mxCell id="exports-label" value="Authorized export API" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#475569;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="937.5" y="1428" width="205" height="32" />
+        </mxCell>
+        <mxCell id="footer" value="Solid: live / HTTP / control I/O   |   Dashed: asynchronous work   |   * Models are candidates   |   Application code and benchmarks are not included" style="text;html=0;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;fontFamily=Segoe UI;fontSize=19;fontColor=#475569;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="70" y="1775" width="2660" height="35" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="ai-inference-flow" name="02 - AI observation and result flow">
+    <mxGraphModel dx="2800" dy="1690" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2800" pageHeight="1690" math="0" shadow="0" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="AI inference | Matched observations and accepted results" style="text;html=0;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;fontFamily=Segoe UI;fontSize=40;fontColor=#0f172a;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="70" y="30" width="2660" height="60" />
+        </mxCell>
+        <mxCell id="subtitle" value="Each team is a separate logical race. NestJS owns the match and scoring; FastAPI performs inference and pushes completed results." style="text;html=0;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;fontFamily=Segoe UI;fontSize=22;fontColor=#475569;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="70" y="109" width="2660" height="42" />
+        </mxCell>
+        <mxCell id="observe" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;exitX=1.0;exitY=0.4807692307692308;exitPerimeter=0;entryX=0.0;entryY=0.4807692307692308;entryPerimeter=0;" edge="1" parent="1" source="snapshot" target="barrier">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="submit" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#7c3aed;exitX=1.0;exitY=0.4807692307692308;exitPerimeter=0;entryX=0.0;entryY=0.4807692307692308;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="barrier" target="api">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="queue" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#7c3aed;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="api" target="worker">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="complete" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#7c3aed;exitX=0.0;exitY=0.4642857142857143;exitPerimeter=0;entryX=1.0;entryY=0.4642857142857143;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="worker" target="gate">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="apply" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#15803d;exitX=0.0;exitY=0.4642857142857143;exitPerimeter=0;entryX=1.0;entryY=0.4642857142857143;entryPerimeter=0;" edge="1" parent="1" source="gate" target="accept">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="reject" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#be123c;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="gate" target="late">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="snapshot" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;1  Freeze checkpoint input&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Canonical team canvas V + hint state H&lt;br&gt;Worker renders accepted operations&lt;br&gt;Common scheduled checkpoint&lt;br&gt;Bind match / round / team / attempt&lt;br&gt;Image hash + renderer/config revisions&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dbeafe;strokeColor=#1d4ed8;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="220" width="480" height="260" />
+        </mxCell>
+        <mxCell id="barrier" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;2  Match engine waits and reserves&lt;/div&gt;&lt;div style=&quot;font-size:21px;line-height:29px;margin-top:16px;&quot;&gt;Check every active human guesser:&lt;br&gt;ACK rendered canvas &amp;gt;= V and hints &amp;gt;= H&lt;br&gt;Reserve the attempt once in match RAM&lt;br&gt;Then release the frozen input to the AI&lt;br&gt;Lag or disconnect enters team grace&lt;br&gt;ACK is not conscious human perception&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dbeafe;strokeColor=#1d4ed8;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=21;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="850" y="220" width="600" height="260" />
+        </mxCell>
+        <mxCell id="api" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;3  Admit an authenticated job&lt;/div&gt;&lt;div style=&quot;font-size:21px;line-height:29px;margin-top:16px;&quot;&gt;FastAPI validates bounded Pydantic payloads&lt;br&gt;Accept job ID and reserved attempt identity&lt;br&gt;Return accepted job identity promptly&lt;br&gt;Enforce queue capacity and per-job deadline&lt;br&gt;Keep the game loop independent of GPU work&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dbeafe;strokeColor=#1d4ed8;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=21;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1900" y="220" width="700" height="260" />
+        </mxCell>
+        <mxCell id="worker" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;4  Run bounded GPU inference&lt;/div&gt;&lt;div style=&quot;font-size:21px;line-height:29px;margin-top:16px;&quot;&gt;Keep weights loaded; fair scheduling across teams&lt;br&gt;One loaded guesser can serve many logical races&lt;br&gt;Guesser and referee use separate task adapters&lt;br&gt;Record capture, queue, start, finish and receipt&lt;br&gt;Push terminal results; retry until acknowledged&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dbeafe;strokeColor=#1d4ed8;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=21;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1900" y="800" width="700" height="280" />
+        </mxCell>
+        <mxCell id="gate" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;5  Validate in the NestJS engine&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Current server instance + round generation&lt;br&gt;Team active; no earlier human solve&lt;br&gt;Expected job / V / H / hash + deadline&lt;br&gt;Reserved attempt valid and not applied&lt;br&gt;Serialize with human guesses; update RAM&lt;br&gt;Older checkpoint V can remain valid&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dbeafe;strokeColor=#1d4ed8;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="850" y="800" width="600" height="280" />
+        </mxCell>
+        <mxCell id="accept" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;6  Publish permitted outcomes&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Guesser: server checks the secret target&lt;br&gt;Publish progress; hide AI guess text&lt;br&gt;Referee: public advisory warning only&lt;br&gt;Private text/crops remain team-scoped&lt;br&gt;Late AI cannot undo a human solve&lt;br&gt;Guesser outage: round-wide bonus off&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dcfce7;strokeColor=#15803d;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="800" width="480" height="280" />
+        </mxCell>
+        <mxCell id="privacy" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Permitted model input&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Canonical image + allowed hints&lt;br&gt;No secret target or human guesses&lt;br&gt;No private opposing canvas&lt;br&gt;Models cannot read the game database&lt;br&gt;Evaluation labels stay outside inference&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#f1f5f9;strokeColor=#64748b;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="1250" width="480" height="240" />
+        </mxCell>
+        <mxCell id="late" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Rejected or unavailable&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Wrong instance/round, duplicate, or expired&lt;br&gt;Finished / forfeited team: no score change&lt;br&gt;Canceled work is not an incorrect AI guess&lt;br&gt;A failed required attempt is unavailable&lt;br&gt;Return idempotent result acknowledgement&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#ffe4e6;strokeColor=#be123c;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="850" y="1250" width="600" height="240" />
+        </mxCell>
+        <mxCell id="models" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Model candidates | pilot required&lt;/div&gt;&lt;div style=&quot;font-size:21px;line-height:29px;margin-top:16px;&quot;&gt;Guesser: Qwen/Qwen3-VL-2B-Instruct&lt;br&gt;Referee evidence: microsoft/Florence-2-base&lt;br&gt;OCR regions do not prove a written clue is illegal&lt;br&gt;Incidental writing on objects remains permitted&lt;br&gt;Measure accuracy, region usefulness and tail latency&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#f1f5f9;strokeColor=#64748b;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=21;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1900" y="1250" width="700" height="240" />
+        </mxCell>
+        <mxCell id="observe-label" value="Frozen input V / H" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#475569;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="618.0" y="303" width="174" height="32" />
+        </mxCell>
+        <mxCell id="submit-label" value="Reserved job + input identity" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#7c3aed;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1543.0" y="303" width="264" height="32" />
+        </mxCell>
+        <mxCell id="queue-label" value="Bounded GPU job" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#7c3aed;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2315.0" y="624" width="170" height="32" />
+        </mxCell>
+        <mxCell id="complete-label" value="Push result / retry / ACK" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#7c3aed;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1564.5" y="888" width="221" height="32" />
+        </mxCell>
+        <mxCell id="apply-label" value="Accepted once" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#15803d;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="632.5" y="888" width="145" height="32" />
+        </mxCell>
+        <mxCell id="reject-label" value="Reject / unavailable" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#be123c;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1218.5" y="1144" width="183" height="32" />
+        </mxCell>
+        <mxCell id="footer" value="Validate the frozen job identity, not the latest canvas version. A new server instance rejects old jobs; live events are ordered in match RAM." style="text;html=0;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;fontFamily=Segoe UI;fontSize=19;fontColor=#475569;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="70" y="1625" width="2660" height="35" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="recovery-flow" name="03 - Reconnect and restart policies">
+    <mxGraphModel dx="2800" dy="1690" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2800" pageHeight="1690" math="0" shadow="0" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Reconnects and restarts | In-memory game server baseline" style="text;html=0;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;fontFamily=Segoe UI;fontSize=40;fontColor=#0f172a;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="70" y="30" width="2660" height="60" />
+        </mxCell>
+        <mxCell id="subtitle" value="Client resynchronization can use a surviving process. A game-process restart voids unfinished rounds; only committed saved results are restored." style="text;html=0;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;fontFamily=Segoe UI;fontSize=22;fontColor=#475569;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="70" y="109" width="2660" height="42" />
+        </mxCell>
+        <mxCell id="survives" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;exitX=1.0;exitY=0.4807692307692308;exitPerimeter=0;entryX=0.0;entryY=0.4807692307692308;entryPerimeter=0;" edge="1" parent="1" source="failure" target="recover">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="resync" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#15803d;exitX=1.0;exitY=0.4807692307692308;exitPerimeter=0;entryX=0.0;entryY=0.4807692307692308;entryPerimeter=0;" edge="1" parent="1" source="recover" target="resume">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="restarted" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#be123c;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="failure" target="restart">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="void" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#be123c;exitX=1.0;exitY=0.4642857142857143;exitPerimeter=0;entryX=0.0;entryY=0.4642857142857143;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="restart" target="uncertain">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="saved" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#475569;exitX=1.0;exitY=0.7857142857142857;exitPerimeter=0;entryX=0.0;entryY=0.7857142857142857;entryPerimeter=0;startArrow=block;startFill=1;" edge="1" parent="1" source="uncertain" target="db">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="return" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#15803d;exitX=0.5;exitY=0.0;exitPerimeter=0;entryX=0.5;entryY=1.0;entryPerimeter=0;" edge="1" parent="1" source="db" target="resume">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="failure" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Connection interrupted&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Reconnect with stable guest identity&lt;br&gt;Present the last applied sequence&lt;br&gt;Socket ID is not the player identity&lt;br&gt;Check whether the game process survived&lt;br&gt;Bound reconnect grace by the deadline&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#ffe4e6;strokeColor=#be123c;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="220" width="480" height="260" />
+        </mxCell>
+        <mxCell id="recover" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Same live NestJS process&lt;/div&gt;&lt;div style=&quot;font-size:21px;line-height:29px;margin-top:16px;&quot;&gt;Authoritative match state remains in RAM&lt;br&gt;Authenticate membership and role&lt;br&gt;Send a filtered snapshot + missing events&lt;br&gt;Deduplicate retries and detect sequence gaps&lt;br&gt;Require fresh rendered-view acknowledgements&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dbeafe;strokeColor=#1d4ed8;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=21;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="850" y="220" width="600" height="260" />
+        </mxCell>
+        <mxCell id="resume" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Return to play&lt;/div&gt;&lt;div style=&quot;font-size:21px;line-height:29px;margin-top:16px;&quot;&gt;Surviving process: resume the current challenge&lt;br&gt;Restart: resume the saved match at a fresh round&lt;br&gt;All active guessers ACK their permitted view&lt;br&gt;Bound reconnect grace by the round deadline&lt;br&gt;Grace expires: the affected team forfeits&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#dcfce7;strokeColor=#15803d;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=21;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1900" y="220" width="700" height="260" />
+        </mxCell>
+        <mxCell id="restart" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Game process restarted&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Live match state and RAM buffers lost&lt;br&gt;No automatic active-match failover&lt;br&gt;Assign a new server instance identity&lt;br&gt;Reject AI results from the old instance&lt;br&gt;Detect rounds without finalization&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#ffe4e6;strokeColor=#be123c;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="800" width="480" height="280" />
+        </mxCell>
+        <mxCell id="uncertain" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Void the interrupted round&lt;/div&gt;&lt;div style=&quot;font-size:21px;line-height:29px;margin-top:16px;&quot;&gt;Discard its provisional points and bonus&lt;br&gt;Retain committed finalized round scores&lt;br&gt;Retry the same match round position&lt;br&gt;Use a fresh prompt and round generation&lt;br&gt;Do not advance the drawer rotation&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#ffe4e6;strokeColor=#be123c;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=21;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="850" y="800" width="600" height="280" />
+        </mxCell>
+        <mxCell id="db" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Saved records | PostgreSQL&lt;/div&gt;&lt;div style=&quot;font-size:21px;line-height:29px;margin-top:16px;&quot;&gt;Match setup, team roster and finalized scores&lt;br&gt;Archived round events and model inputs&lt;br&gt;Flush events before finalizing a round&lt;br&gt;Unique round finalization / idempotent writes&lt;br&gt;Unflushed live events can be lost on restart&lt;/div&gt;" style="shape=mxgraph.flowchart.database;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=40;strokeWidth=2;fillColor=#ede9fe;strokeColor=#7c3aed;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=21;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1900" y="800" width="700" height="280" />
+        </mxCell>
+        <mxCell id="disconnect" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Human lag / disconnect&lt;/div&gt;&lt;div style=&quot;font-size:21px;line-height:29px;margin-top:16px;&quot;&gt;Affected team gets a bounded reconnect grace period.&lt;br&gt;Other teams and the common round clock continue.&lt;br&gt;Hold affected-team AI delivery until rendered catch-up.&lt;br&gt;Grace expires: forfeit that team; cancel its AI jobs.&lt;br&gt;Normal reconnect depends on the live game process.&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#f1f5f9;strokeColor=#64748b;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=21;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="1250" width="780" height="240" />
+        </mxCell>
+        <mxCell id="outage" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;AI service outage&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Human speed points remain valid.&lt;br&gt;Required guesser attempt unavailable: all round AI bonuses off.&lt;br&gt;Bonuses stay provisional until round finalization.&lt;br&gt;Normal cancellation after a solve is not a service outage.&lt;br&gt;Referee outage: advisory flagging unavailable.&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#f1f5f9;strokeColor=#64748b;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="960" y="1250" width="780" height="240" />
+        </mxCell>
+        <mxCell id="durability" value="&lt;div style=&quot;font-size:24px;font-weight:700;&quot;&gt;Persistence and scope&lt;/div&gt;&lt;div style=&quot;font-size:20px;line-height:28px;margin-top:16px;&quot;&gt;Live drawing is accepted in RAM and broadcast immediately.&lt;br&gt;PostgreSQL writes are batched in background workers.&lt;br&gt;Flush round events, then commit the finalized result.&lt;br&gt;The baseline uses one active NestJS game process.&lt;br&gt;Transparent server failover is outside this baseline.&lt;/div&gt;" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=18;spacingTop=18;strokeWidth=2;fillColor=#f1f5f9;strokeColor=#64748b;fontColor=#0f172a;fontFamily=Segoe UI;fontSize=20;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1840" y="1250" width="780" height="240" />
+        </mxCell>
+        <mxCell id="survives-label" value="Process survived" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#475569;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="626.0" y="303" width="158" height="32" />
+        </mxCell>
+        <mxCell id="resync-label" value="Authenticated resync" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#15803d;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1576.5" y="303" width="197" height="32" />
+        </mxCell>
+        <mxCell id="restarted-label" value="Process restarted" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#be123c;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="398.0" y="624" width="164" height="32" />
+        </mxCell>
+        <mxCell id="void-label" value="Void live round" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#be123c;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="631.5" y="888" width="147" height="32" />
+        </mxCell>
+        <mxCell id="saved-label" value="Load committed results" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#475569;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1566.0" y="978" width="218" height="32" />
+        </mxCell>
+        <mxCell id="return-label" value="Saved match / fresh round" style="text;html=0;align=center;verticalAlign=middle;fillColor=#ffffff;strokeColor=none;fontFamily=Segoe UI;fontColor=#15803d;fontSize=19;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2339.0" y="624" width="242" height="32" />
+        </mxCell>
+        <mxCell id="footer" value="This baseline supports client reconnects while the backend is alive. Backend restart interrupts every active match hosted in that process." style="text;html=0;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;fontFamily=Segoe UI;fontSize=19;fontColor=#475569;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="70" y="1625" width="2660" height="35" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
