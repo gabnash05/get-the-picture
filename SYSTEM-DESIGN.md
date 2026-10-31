@@ -2,7 +2,7 @@
 
 Consolidated on **31 October 2026 (Asia/Manila)**. Game name: **Get the Picture?**.
 
-This is the self-contained record of the game and system-design decisions agreed in today's conversation, including the final clarification session. It is the current design reference when an older handoff, README, glossary entry or diagram differs. During this finalization, only this file is updated.
+This is the self-contained record of the game and system-design decisions agreed in today's conversation, including the final clarification session. It is the current design reference when an older handoff, README, glossary entry or diagram differs.
 
 **Status:** the architecture and behavioral policies below are the agreed design baseline. Module names, internal route names, exact tuning values, model suitability and deployment capacity are not validated implementation results. No application, infrastructure or model benchmark has been produced by this documentation work.
 
@@ -61,15 +61,15 @@ Keep ordinary drawing delivery independent of SQL reads, page rendering, image c
 
 ## High-level architecture
 
-![High-level architecture](docs/diagrams/system-overview.png)
+![High-level architecture](docs/get_the_picture_system_design.png)
 
-[Editable three-page Draw.io source](docs/diagrams/drawing-game-system-design.drawio) · [Zoomable overview SVG](docs/diagrams/system-overview.svg) · [Local diagram viewer](docs/diagrams/open-system-design.html)
+[Editable Excalidraw source](docs/get-the-picture-system-design.excalidraw) · [PNG preview](docs/get_the_picture_system_design.png)
 
 The browser paints immediately and sends small drawing-operation batches over a persistent Socket.IO connection to NestJS. The backend validates and serializes each match's events, updates authoritative state in RAM, and broadcasts role-filtered operations. A bounded background writer archives batches to PostgreSQL. Image rendering and GPU inference run in workers, and AI completions are pushed back to the match engine.
 
 The baseline runs **one active NestJS game process**, which can host multiple matches. Next.js and FastAPI are separately restartable applications. A disconnected client can resynchronize while that game process survives. A game-process restart loses its active state, so unfinished rounds are voided and retried from saved match metadata and committed prior-round results. Transparent active-match failover and shared state across multiple game replicas are outside this baseline.
 
-The three diagram pages cover the full high-level architecture, AI observation/result handling, and reconnect/restart policies. Render and archive workers are responsibilities owned by the game backend; each box does not imply a separate deployed microservice. The linked diagrams show the existing topology and baseline flows; the more specific finalization-session policies in this document take precedence. Their source files are not changed during this single-file synthesis.
+The retained Excalidraw diagram is a high-level architecture sketch. The precise framework choices and behavioral policies in this document take precedence over abbreviated diagram labels. Render and archive workers are responsibilities owned by the game backend; each box does not imply a separate deployed microservice.
 
 ## Current stack and ownership
 
@@ -146,8 +146,6 @@ Stable IDs and per-match/canvas ordering support deduplication and gap recovery.
 
 ## Client reconnects and game-server restarts
 
-![Reconnect and restart behavior](docs/diagrams/recovery-flow.png)
-
 ### Temporary participant disconnect or lag
 
 Connected teammates keep drawing and guessing. Remove a disconnected participant from the active-guesser set, rather than suspending the whole team. A connected guesser whose rendering is merely behind still participates in the observation check until the configured lag/inactive policy applies; do not bypass the fairness check by treating every unacknowledged client as absent.
@@ -186,8 +184,6 @@ AI-bonus eligibility is one-way within the round: once a qualifying client-readi
 Late AI output cannot turn an earlier accepted human solve into an AI win. Round-wide bonus removal and explicit voiding are the agreed finalization policies. Missed checkpoints expire; reconnect does not grant a burst of overdue guesses. Exact grace and lag values are deferred tuning parameters.
 
 ## AI observations and result acceptance
-
-![AI observation and result flow](docs/diagrams/ai-inference-flow.png)
 
 At each scheduled checkpoint, freeze the active team's canonical canvas version `V` and official hint version `H`. A worker renders the accepted operations. Before releasing that input to the AI, require every active human guesser on that team to acknowledge rendering at least `V` and `H`. Each team's barrier is independent, so healthy teams can continue under the agreed grace/forfeit policy.
 
@@ -260,16 +256,9 @@ The team-specific missed-checkpoint policy and database-outage behavior are now 
 
 The final clarification session confirmed: connected teammates continue during grace; only currently active guessers acknowledge inputs; a readiness-related missed checkpoint removes that team's bonus only; saving must complete before the next round; and a team forfeits for absent guessers only if no eligible human guesser recovers within grace. These clarifications supersede broader earlier statements about forfeiting an entire team whenever any member fails to reconnect.
 
-## Diagram rebuild and QA
+## Retained architecture diagram
 
-Canonical sources and previews are under `docs/diagrams/`. From the repository root:
+- [Editable Excalidraw source](docs/get-the-picture-system-design.excalidraw).
+- [PNG preview](docs/get_the_picture_system_design.png).
 
-```powershell
-python docs/diagrams/generate-diagrams.py
-```
-
-The generator requires Pillow and rebuilds all three pages, PNG/SVG previews, the combined editable file, local viewer and optional editor URL. Separate combiner and launcher wrappers remain available. Run the installed Draw.io validator after XML edits.
-
-Local previews share the editable files' geometry and labels; they are not diagrams.net screenshots. No external-editor upload or browser QA is claimed. The optional editor URL is available for user-controlled opening, and the `.drawio` files can be imported into a local editor.
-
-The three individual sources and combined source passed the installed Draw.io validator. Generated geometry checks passed for text fit, component overlap, ports and connectors through unrelated components. All three revised local previews were visually reviewed.
+Edit the source in Excalidraw and export a new PNG when the sketch changes. The source and current preview are retained without changes in this cleanup. The detailed system-design rules above are authoritative; the sketch is a high-level illustration.

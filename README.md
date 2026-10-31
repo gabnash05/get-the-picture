@@ -1,6 +1,6 @@
-# Transformer-powered team drawing game
+# Get the Picture?
 
-Working concept for an intelligent-systems class project. The project name is undecided.
+A transformer-powered multiplayer drawing game for an intelligent-systems class project.
 
 Teams compete simultaneously on separate canvases using the same randomly selected, familiar everyday prompt. Each team has one drawer per round, while every other teammate guesses and races a transformer-powered AI assigned to that team's challenge. The first correct human guess solves the challenge for the whole team and earns one speed-based team score, with a bonus for beating its AI. Every team's AI has the same guess cap and fixed checkpoints; human teammates can keep guessing until the team solves or the shared time limit expires. Human and AI guessers receive the same word-length and progressively revealed-letter hints.
 
@@ -17,13 +17,13 @@ Valid examples include `2v2`, `2v2v2`, `3v3`, `3v3v3`, `2v3`, and `3v2v4`. In `3
 ## Recovery and availability
 
 - NestJS accepts live events in memory and broadcasts them immediately; PostgreSQL archival runs asynchronously. A game-server restart voids unfinished rounds. Retry with a fresh prompt using saved match setup and committed prior-round results; transparent active-match failover is outside the baseline.
-- An affected team gets a bounded reconnect grace period. Other teams and the common round clock continue; if recovery fails, that team forfeits its active challenge.
-- If an AI guesser outage prevents a required attempt, keep human speed points and disable the AI bonus for every team in that round. Referee outages leave advisory flagging unavailable.
+- Connected teammates keep playing after a disconnect. A team gets reconnect grace when it has no active human guesser; it forfeits only if no guesser recovers within that grace. Other teams and the common round clock continue.
+- If an AI guesser outage prevents a required attempt, keep human speed points and disable the AI bonus for every team in that round. A checkpoint missed because human clients were not ready removes only that team's bonus. Referee outages leave advisory flagging unavailable.
 - Round points and bonuses stay provisional until the round's required records are saved and its result commits to PostgreSQL. A normal cancellation after a solve or forfeit is not an AI outage. A voided round does not consume a match round or advance the drawer rotation.
 
 ## Architecture
 
-The proposed stack is **Next.js** for the web application, **NestJS + Socket.IO** for the authoritative game backend, **FastAPI** for inference, and **PostgreSQL + Prisma** for saved records. Active matches live in one game process's memory, with background archival. See [SYSTEM-DESIGN.md](SYSTEM-DESIGN.md), [the high-level diagram](docs/diagrams/system-overview.svg), and [the three-page editable Draw.io source](docs/diagrams/drawing-game-system-design.drawio). This is documentation, not an implemented or benchmarked deployment.
+The proposed stack is **Next.js** for the web application, **NestJS + Socket.IO** for the authoritative game backend, **FastAPI** for inference, and **PostgreSQL + Prisma** for saved records. Active matches live in one game process's memory, with background archival. See [SYSTEM-DESIGN.md](SYSTEM-DESIGN.md), [the architecture preview](docs/get_the_picture_system_design.png), and [the editable Excalidraw source](docs/get-the-picture-system-design.excalidraw). This is documentation, not an implemented or benchmarked deployment.
 
 ## Project focus
 

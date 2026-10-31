@@ -115,10 +115,10 @@ The player-agreed number of teams and number of human players on each team. The 
 The first correct guess submitted by any of a team's human guessers. It completes the team's challenge and records one provisional team result, including any eligible beat-the-AI bonus. Other teammates do not earn additional solve scores for the same prompt.
 
 ## Reconnect grace
-A bounded opportunity for an affected team to recover its connection during an active challenge. Other teams and the common round clock continue.
+A bounded opportunity to restore at least one eligible human guesser when a team has no active guesser. Connected teammates otherwise keep playing, and other teams and the common round clock continue.
 
 ## Team forfeit
-The end of an active team challenge after its reconnect grace expires without recovery. That team earns no solve score for the challenge; other teams continue.
+The end of an active team challenge when no eligible human guesser recovers before its reconnect grace expires. One absent member does not forfeit a team that still has an active guesser. The forfeited team earns no solve score for that challenge; other teams continue.
 
 ## Round finalization
 Confirmation of the round's team scores and AI-bonus eligibility, after which those results count toward the match total.
