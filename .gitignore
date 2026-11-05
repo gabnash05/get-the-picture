@@ -1,0 +1,37 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Node and Next.js build/test output
+**/node_modules/
+/apps/web/.next/
+/apps/web/out/
+/apps/web/coverage/
+/apps/web/playwright-report/
+/apps/web/test-results/
+/apps/web/*.tsbuildinfo
+
+# Python, notebook, and test caches
+**/.venv/
+**/__pycache__/
+*.py[cod]
+**/.ipynb_checkpoints/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.coverage*
+**/.cache/
+
+# Build artifacts
+**/build/
+**/dist/
+
+# Local OS/editor/temp files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+*.tmp
+*.log
