@@ -20,15 +20,15 @@ This Python/Jupyter workspace supports the project's evaluation and inference wo
 Install `uv` and Git. From the repository root, run the same commands in PowerShell or a Linux shell:
 
 ```sh
-uv sync --project research/guesser-evaluation --locked
+uv sync --project models/guesser/evaluation --locked
 ```
 
-`uv` selects Python 3.12.16 from `.python-version` (downloading it if needed) and creates `research/guesser-evaluation/.venv`. No Pipenv, manual virtualenv activation, `.env`, or `PYTHONPATH` setting is needed; the workspace package is installed into the environment.
+`uv` selects Python 3.12.16 from `.python-version` (downloading it if needed) and creates `models/guesser/evaluation/.venv`. No Pipenv, manual virtualenv activation, `.env`, or `PYTHONPATH` setting is needed; the workspace package is installed into the environment.
 
 To add the model/API packages when that work begins:
 
 ```sh
-uv sync --project research/guesser-evaluation --locked --extra inference
+uv sync --project models/guesser/evaluation --locked --extra inference
 ```
 
 The inference extra downloads large PyTorch wheels. Confirm `torch.cuda.is_available()` on the target machine before relying on GPU inference; CPU environment checks still work if CUDA is unavailable.
@@ -38,9 +38,9 @@ The inference extra downloads large PyTorch wheels. Confirm `torch.cuda.is_avail
 Run these once **in every clone**, from the repository root, after `uv sync`:
 
 ```sh
-uv run --project research/guesser-evaluation pre-commit install --config research/guesser-evaluation/.pre-commit-config.yaml
-uv run --project research/guesser-evaluation nbdime config-git --enable
-uv run --project research/guesser-evaluation nbstripout --install
+uv run --project models/guesser/evaluation pre-commit install --config models/guesser/evaluation/.pre-commit-config.yaml
+uv run --project models/guesser/evaluation nbdime config-git --enable
+uv run --project models/guesser/evaluation nbstripout --install
 ```
 
 What each step does:
@@ -54,8 +54,8 @@ The hook/filter and driver registrations live in `.git` configuration and are **
 In a clone with the clean filter enabled, Git uses nbstripout's stripped text view for notebook diffs, while the configured nbdime merge driver handles notebook conflicts. Check the local setup with:
 
 ```sh
-uv run --project research/guesser-evaluation nbstripout --status
-git check-attr -a -- research/guesser-evaluation/notebooks/00_environment_check.ipynb
+uv run --project models/guesser/evaluation nbstripout --status
+git check-attr -a -- models/guesser/evaluation/notebooks/00_environment_check.ipynb
 ```
 
 ## Start JupyterLab
@@ -63,7 +63,7 @@ git check-attr -a -- research/guesser-evaluation/notebooks/00_environment_check.
 From the repository root:
 
 ```sh
-uv run --project research/guesser-evaluation jupyter lab research/guesser-evaluation/notebooks
+uv run --project models/guesser/evaluation jupyter lab models/guesser/evaluation/notebooks
 ```
 
 JupyterLab uses the project's Python kernel. Open `00_environment_check.ipynb` and run all cells to check Python, package imports, and a small image operation. It reports the current OS and interpreter so collaborators can confirm which environment they launched.
@@ -72,13 +72,13 @@ Useful launch options (append them before the notebook directory):
 
 ```sh
 # Use another port if 8888 is busy
-uv run --project research/guesser-evaluation jupyter lab --port=8890 research/guesser-evaluation/notebooks
+uv run --project models/guesser/evaluation jupyter lab --port=8890 models/guesser/evaluation/notebooks
 
 # Do not open a browser automatically (for remote/headless use)
-uv run --project research/guesser-evaluation jupyter lab --no-browser research/guesser-evaluation/notebooks
+uv run --project models/guesser/evaluation jupyter lab --no-browser models/guesser/evaluation/notebooks
 
 # Bind to all interfaces only when remote access is required
-uv run --project research/guesser-evaluation jupyter lab --ip=0.0.0.0 research/guesser-evaluation/notebooks
+uv run --project models/guesser/evaluation jupyter lab --ip=0.0.0.0 models/guesser/evaluation/notebooks
 ```
 
 Binding to `0.0.0.0` can expose the notebook server to other devices on the network. Use it only on a trusted network and keep Jupyter's token/password protection enabled.
@@ -86,7 +86,7 @@ Binding to `0.0.0.0` can expose the notebook server to other devices on the netw
 If using a Jupyter server launched outside this environment, register the kernel once:
 
 ```sh
-uv run --project research/guesser-evaluation python -m ipykernel install --user --name mtmai-guesser-evaluation --display-name "Python (MTMAI Guesser Evaluation)"
+uv run --project models/guesser/evaluation python -m ipykernel install --user --name mtmai-guesser-evaluation --display-name "Python (MTMAI Guesser Evaluation)"
 ```
 
 Then select **Python (MTMAI Guesser Evaluation)** in the notebook's kernel menu. If it is missing, repeat the registration command after syncing the environment.
@@ -104,14 +104,14 @@ git switch -c feature/evaluation-notebook
 When a notebook merge conflict remains after `git merge` or `git pull`, do **not** resolve the `.ipynb` JSON or conflict markers by hand. From the repository root, run:
 
 ```sh
-uv run --project research/guesser-evaluation nbdime mergetool
+uv run --project models/guesser/evaluation nbdime mergetool
 ```
 
 Nbdime opens a three-way notebook merge view so you can compare the base, local, and incoming notebook cells. Review the merged notebook, save it, then stage the resolved file and continue the merge:
 
 ```sh
 git status --short
-git add research/guesser-evaluation/notebooks/<resolved-notebook>.ipynb
+git add models/guesser/evaluation/notebooks/<resolved-notebook>.ipynb
 git commit
 ```
 
@@ -122,15 +122,23 @@ The nbdime merge driver handles notebook structure; `nbstripout` removes irrelev
 Do not install packages with bare `pip`. Add a dependency to the appropriate group or optional extra in `pyproject.toml`, regenerate the lock, then sync:
 
 ```sh
-uv lock --project research/guesser-evaluation
-uv sync --project research/guesser-evaluation --locked
+uv lock --project models/guesser/evaluation
+uv sync --project models/guesser/evaluation --locked
 ```
 
 Run the current environment checks from the repository root:
 
 ```sh
-uv run --project research/guesser-evaluation python -m pytest
-uv run --project research/guesser-evaluation ruff check research/guesser-evaluation/src research/guesser-evaluation/tests
+uv run --project models/guesser/evaluation python -m pytest
+uv run --project models/guesser/evaluation ruff check models/guesser/evaluation/src models/guesser/evaluation/tests
 ```
 
 Commit the updated `uv.lock` with dependency changes so Windows and Linux collaborators resolve the same versions.
+
+## Required libraries
+
+Use TorchMetrics for top-1/top-3, F1, confusion and calibration error. Reuse PyTorch/Lightning evaluation APIs and the data package's fixed timestamp views. Custom orchestration keeps the ten stages, blank/pass outcomes, original-grouped reporting and held-out-test policy explicit. Do not implement standard metric formulas again.
+
+See the [library guide](../LIBRARIES.md) and [implementation rules](../AGENTS.md). These choices do not mean the model packages or service are installed yet.
+
+Future serving code belongs in `../inference/`; shared weights belong in `../checkpoints/`. The evaluator and inference service are not implemented yet.

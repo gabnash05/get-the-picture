@@ -3,4 +3,4 @@ repos:
     rev: 0.9.1
     hooks:
       - id: nbstripout
-        files: ^research/guesser-evaluation/notebooks/.*\.ipynb$
+        files: ^models/guesser/evaluation/notebooks/.*\.ipynb$

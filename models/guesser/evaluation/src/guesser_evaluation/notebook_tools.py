@@ -22,7 +22,7 @@ def module_source_path(filename: str, start: Path | None = None) -> Path:
 
     current = (start or Path.cwd()).resolve()
     for parent in (current, *current.parents):
-        for project_root in (parent, parent / "research" / "guesser-evaluation"):
+        for project_root in (parent, parent / "models" / "guesser" / "evaluation"):
             package_dir = project_root / "src" / "guesser_evaluation"
             if (project_root / "pyproject.toml").is_file() and package_dir.is_dir():
                 return (package_dir / filename).resolve()

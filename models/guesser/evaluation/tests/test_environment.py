@@ -48,5 +48,5 @@ def test_notebook_source_path_helper_supports_additional_modules() -> None:
     workspace = Path(__file__).parents[1]
     expected = (workspace / "src" / "guesser_evaluation" / "analysis.py").resolve()
 
-    for start in (workspace.parents[1], workspace, workspace / "notebooks"):
+    for start in (workspace.parents[2], workspace, workspace / "notebooks"):
         assert module_source_path("analysis.py", start=start) == expected

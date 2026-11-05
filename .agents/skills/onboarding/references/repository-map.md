@@ -9,7 +9,7 @@ This is a navigation aid, not a second specification or a snapshot of implementa
 | Backend scoring or turn lifecycle | `docs/BACKEND-SCORING-PLAN.md` | `SYSTEM-DESIGN.md`, then the current backend code/tests if present |
 | Frontend scope, design, or canvas behavior | `docs/FRONTEND-BASE-SCOPE.md` | `docs/FRONTEND-IMPLEMENTATION-PLAN.md`, `docs/FRONTEND-VALIDATION.md`, `apps/web/README.md`, and the relevant `apps/web/` code/tests |
 | Visual tokens and assets | `docs/design-system/DESIGN.md` | `docs/design-system/DESIGN-HANDOFF.md`, `docs/design-system/tokens.css`, `docs/design-system/tokens.json`, and referenced assets |
-| Guesser evaluation or inference research | `research/guesser-evaluation/README.md` | `research/guesser-evaluation/pyproject.toml`, `research/guesser-evaluation/src/`, `research/guesser-evaluation/tests/`, and `research/guesser-evaluation/notebooks/` as relevant |
+| Guesser evaluation or inference research | `models/guesser/evaluation/README.md` | `models/guesser/evaluation/pyproject.toml`, `models/guesser/evaluation/src/`, `models/guesser/evaluation/tests/`, and `models/guesser/evaluation/notebooks/` as relevant |
 
 ## Evidence and precedence
 
