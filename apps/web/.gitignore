@@ -4,3 +4,6 @@ out/
 playwright-report/
 test-results/
 *.tsbuildinfo
+
+.cache/
+.npm-cache/

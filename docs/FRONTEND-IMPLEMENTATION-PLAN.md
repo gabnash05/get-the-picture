@@ -192,3 +192,6 @@ Peer reviews are read-only; fixes return to the owning agent. Reassign workers a
 ## Still outside this implementation
 
 Backend room ownership, authorization, actual player membership, synchronized hints/clock, game scoring, guesses, AI/referee behavior, canonical rendering/reconciliation, final drawing persistence, replay/export screens, hosting-provider setup, and the user's final UI/UX pass remain separate work.
+
+> Historical base implementation: the approved room-flow implementation supersedes the temporary entry, console-only, and blank-refresh descriptions below. See [FRONTEND-ROOM-INTEGRATION.md](FRONTEND-ROOM-INTEGRATION.md).
+

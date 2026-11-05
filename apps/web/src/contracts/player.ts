@@ -9,8 +9,8 @@ export const CRAYON_COLORS = {
   pink: "#FF57B5",
 } as const;
 export type CrayonColor = keyof typeof CRAYON_COLORS;
-export type AvatarShape = "pebble" | "droplet" | "spark";
-export type AvatarExpression = "smile" | "wink" | "wow";
+export type AvatarShape = "pebble" | "droplet" | "spark" | "bean" | "cloud";
+export type AvatarExpression = "smile" | "wink" | "wow" | "grin" | "sleepy";
 export interface AvatarConfig {
   shape: AvatarShape;
   expression: AvatarExpression;
@@ -25,3 +25,4 @@ export const DEFAULT_AVATAR: AvatarConfig = {
   expression: "smile",
   color: "cyan",
 };
+

@@ -146,6 +146,16 @@ describe("drawing batcher", () => {
     expect(Object.isFrozen(batches[0].operations[0])).toBe(true);
     expect(Object.isFrozen(batches[0].operations)).toBe(true);
   });
+  it("uses the injected room-client transport and stable stream identity", () => {
+    const b = createDrawingBatcher({ roomCode: "R", canvasId: "C", transport: "room-client", streamId: "stream-1", send: batch => batches.push(batch) });
+    b.enqueue(start());
+    b.enqueue(end());
+    b.enqueue(clear());
+    expect(batches.map(batch => [batch.transport, batch.streamId, batch.clientSeq])).toEqual([
+      ["room-client", "stream-1", [1, 2]],
+      ["room-client", "stream-1", [3, 3]],
+    ]);
+  });
   it("logs the inspectable batch", () => {
     const spy = vi.spyOn(console, "info").mockImplementation(() => {});
     const b = setup();

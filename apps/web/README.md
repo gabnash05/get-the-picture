@@ -46,3 +46,8 @@ npm run test:e2e
 Browser checks use installed Google Chrome through Playwright and test the exported production build. If Chrome is unavailable, install it or install Playwright Chromium and adjust the test project channel.
 
 The game panels and local chat are fixtures. After canvas validation, the user will replace or substantially revise the UI. The scope and motion contracts live in the game repository's `docs/FRONTEND-BASE-SCOPE.md`, `docs/FRONTEND-IMPLEMENTATION-PLAN.md`, and `docs/design-system/LOGIN_MOTION.md`.
+
+## Room transport
+
+Room flow defaults to a browser-local demo. Set the variables in `.env.example` to configure the proposed remote adapter. See [the room integration contract](../../docs/FRONTEND-ROOM-INTEGRATION.md) for boundaries and recovery behavior.
+

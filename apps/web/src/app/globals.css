@@ -1,3 +1,4 @@
+@import "tailwindcss";
 *,
 *::before,
 *::after {
@@ -80,3 +81,4 @@ button {
     scroll-behavior: auto !important;
   }
 }
+

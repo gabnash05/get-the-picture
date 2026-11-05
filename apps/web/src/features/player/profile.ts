@@ -22,8 +22,12 @@ function valid(value: unknown): value is PlayerProfile {
     return false;
   const a = p.avatar as Record<string, unknown>;
   return (
-    ["pebble", "droplet", "spark"].includes(a.shape as AvatarShape) &&
-    ["smile", "wink", "wow"].includes(a.expression as AvatarExpression) &&
+    ["pebble", "droplet", "spark", "bean", "cloud"].includes(
+      a.shape as AvatarShape,
+    ) &&
+    ["smile", "wink", "wow", "grin", "sleepy"].includes(
+      a.expression as AvatarExpression,
+    ) &&
     typeof a.color === "string" &&
     Object.hasOwn(CRAYON_COLORS, a.color)
   );

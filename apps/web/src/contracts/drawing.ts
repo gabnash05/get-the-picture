@@ -48,11 +48,14 @@ export interface CanvasStatus {
   hasInk: boolean;
 }
 export interface DrawingCanvasHandle {
+  hydrate(operations: CanvasOperation[]): Promise<void>;
+  applyOperations(operations: CanvasOperation[]): Promise<void>;
   undo(): void;
   redo(): void;
   clear(): void;
 }
 export interface DrawingCanvasProps {
+  readOnly?: boolean;
   settings: DrawingSettings;
   onOperation(operation: CanvasOperation): void;
   onStatusChange?(status: CanvasStatus): void;
@@ -63,8 +66,9 @@ export type FlushReason =
   "interval" | "stroke-end" | "command" | "manual" | "dispose";
 export type SequencedOperation = CanvasOperation & { clientSeq: number };
 export interface DrawingBatch {
-  transport: "console";
+  transport: "console" | "local" | "remote" | "room-client";
   batchId: string;
+  streamId?: string;
   roomCode: string;
   canvasId: string;
   clientSeq: [number, number];
@@ -80,6 +84,8 @@ export interface DrawingBatcherOptions {
   roomCode: string;
   canvasId: string;
   intervalMs?: number;
+  transport?: DrawingBatch["transport"];
+  streamId?: string;
   send?(batch: DrawingBatch): void;
   now?(): number;
 }
@@ -88,3 +94,6 @@ export interface DrawingBatcher {
   flush(reason?: FlushReason): void;
   dispose(): void;
 }
+
+
+

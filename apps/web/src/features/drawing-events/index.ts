@@ -50,7 +50,8 @@ export function createDrawingBatcher(
     const operations = pending;
     pending = [];
     const batch: DrawingBatch = {
-      transport: "console",
+      transport: options.transport ?? "console",
+      ...(options.streamId ? { streamId: options.streamId } : {}),
       batchId: `${instanceId}-${++batchNumber}`,
       roomCode: options.roomCode,
       canvasId: options.canvasId,

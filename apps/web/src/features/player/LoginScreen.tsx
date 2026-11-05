@@ -12,18 +12,21 @@ import {
 } from "../../contracts/player";
 import { Avatar } from "./Avatar";
 import { readPlayerProfile, savePlayerProfile } from "./profile";
+import { createRoomClient, saveRoomSession } from "@/features/room-client";
 import "./player.css";
 
-const shapes: AvatarShape[] = ["pebble", "droplet", "spark"];
-const expressions: AvatarExpression[] = ["smile", "wink", "wow"];
+const shapes: AvatarShape[] = ["pebble", "droplet", "spark", "bean", "cloud"];
+const expressions: AvatarExpression[] = [
+  "smile",
+  "wink",
+  "wow",
+  "grin",
+  "sleepy",
+];
 const colors = Object.keys(CRAYON_COLORS) as CrayonColor[];
 const pick = <T,>(items: T[]): T =>
   items[Math.floor(Math.random() * items.length)];
 const title = (s: string) => s[0].toUpperCase() + s.slice(1);
-const code = () =>
-  Array.from({ length: 6 }, () =>
-    pick("ABCDEFGHJKLMNPQRSTUVWXYZ23456789".split("")),
-  ).join("");
 
 type BobStyle = CSSProperties & {
   "--bob-duration": string;
@@ -37,6 +40,7 @@ export default function LoginScreen() {
   const [avatar, setAvatar] = useState<AvatarConfig>(DEFAULT_AVATAR);
   const [room, setRoom] = useState(params.get("code") ?? "");
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
   const [motion, setMotion] = useState<BobStyle[]>([]);
   useEffect(() => {
     const profile = readPlayerProfile();
@@ -55,8 +59,9 @@ export default function LoginScreen() {
       })),
     );
   }, []);
-  function enter(event: FormEvent<HTMLFormElement>) {
+  async function enter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending) return;
     const submitter = (event.nativeEvent as SubmitEvent)
       .submitter as HTMLButtonElement | null;
     const joining = submitter?.value === "join";
@@ -70,10 +75,26 @@ export default function LoginScreen() {
       setError("Please enter a room code.");
       return;
     }
-    savePlayerProfile({ name: cleanName, avatar });
-    router.push(
-      `/room/?code=${encodeURIComponent(joining ? cleanRoom : code())}`,
-    );
+    const profile = { name: cleanName, avatar };
+    savePlayerProfile(profile);
+    setPending(true);
+    setError("");
+    try {
+      const client = createRoomClient();
+      const session = joining
+        ? await client.join(cleanRoom.toUpperCase(), profile)
+        : await client.create(profile);
+      saveRoomSession(session);
+      client.dispose();
+      router.push(`/room/?code=${encodeURIComponent(session.snapshot.code)}`);
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Could not enter the room. Please try again.",
+      );
+      setPending(false);
+    }
   }
   function randomize() {
     let next: AvatarConfig;
@@ -103,11 +124,7 @@ export default function LoginScreen() {
       <div className="player-login-content">
         <section className="player-art">
           <p className="player-eyebrow">Bring your best bad drawing.</p>
-          <h1>
-            Little doodles.
-            <br />
-            Big guesses.
-          </h1>
+          <h1>Your imagination wasn’t in its training data.</h1>
           <div className="player-stage">
             <div
               className="player-bob player-decor player-star"
@@ -250,8 +267,9 @@ export default function LoginScreen() {
               className="player-button player-create"
               type="submit"
               value="create"
+              disabled={pending}
             >
-              Create a room →
+              {pending ? "Entering room…" : "Create a room →"}
             </button>
             <div className="player-join">
               <label className="player-field">
@@ -270,6 +288,7 @@ export default function LoginScreen() {
                 className="player-button player-join-button"
                 type="submit"
                 value="join"
+                disabled={pending}
               >
                 Join room
               </button>

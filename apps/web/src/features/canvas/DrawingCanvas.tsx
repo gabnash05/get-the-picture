@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from "react";
 import type Atrament from "atrament";
 import {
   CANVAS_HEIGHT,
@@ -15,7 +15,7 @@ import styles from "./DrawingCanvas.module.css";
 
 const uid = () => crypto.randomUUID();
 
-type Engine = { undo(): void; redo(): void; clear(): void; finish(): void };
+type Engine = { undo(): void; redo(): void; clear(): void; finish(): void; hydrate(operations: CanvasOperation[]): Promise<void>; applyOperations(operations: CanvasOperation[]): Promise<void> };
 const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
   function DrawingCanvas(props, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,19 +28,30 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
         undo: () => engineRef.current?.undo(),
         redo: () => engineRef.current?.redo(),
         clear: () => engineRef.current?.clear(),
+        hydrate: (operations) => engineRef.current?.hydrate(operations) ?? Promise.reject(new Error("Canvas is unavailable")),
+        applyOperations: (operations) => engineRef.current?.applyOperations(operations) ?? Promise.reject(new Error("Canvas is unavailable")),
       }),
       [],
     );
 
-    useEffect(() => {
+    useLayoutEffect(() => {
       const canvas = canvasRef.current!;
       const context = canvas.getContext("2d", { willReadFrequently: true })!;
-      const history = new BitmapHistory();
+      let history = new BitmapHistory();
+      let replaying = false;
+      let replayPending = 0;
+      let replayQueue = Promise.resolve();
+      const seen = new Set<string>();
+      let readyResolve!: () => void;
+      let readyReject!: (error: Error) => void;
+      const ready = new Promise<void>((resolve, reject) => { readyResolve = resolve; readyReject = reject; });
+      void ready.catch(() => {});
       let alive = true,
         busy = false,
         hasInk = false;
       let artist: Atrament | undefined;
       let worker: Worker | undefined;
+      let cancelFill: (() => void) | undefined;
       let queue: (() => void)[] = [];
       let active:
         | {
@@ -55,15 +66,15 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
         | undefined;
       const status = () => {
         canvas.dataset.ready = String(!!artist);
-        canvas.setAttribute("aria-busy", String(!artist || busy));
+        canvas.setAttribute("aria-busy", String(!artist || busy || replaying || replayPending > 0));
         propsRef.current.onStatusChange?.({
           canUndo: history.canUndo,
           canRedo: history.canRedo,
-          busy: !artist || busy,
+          busy: !artist || busy || replaying || replayPending > 0,
           hasInk,
         });
       };
-      const emit = (op: CanvasOperation) => propsRef.current.onOperation(op);
+      const emit = (op: CanvasOperation) => { if (!replaying) { seen.add(op.opId); propsRef.current.onOperation(op); } };
       const base = (actionId: string) => ({
         opId: uid(),
         actionId,
@@ -133,6 +144,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
         status();
       };
       const command = (run: () => void) => {
+        if (propsRef.current.readOnly || replaying || replayPending || replayStroke) return;
         finish();
         if (busy) queue.push(run);
         else run();
@@ -140,16 +152,17 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
       const drain = () => {
         while (!busy && queue.length && alive) queue.shift()?.();
       };
-      const fill = (p: CanvasPoint, color: string) => {
+      const fill = (p: CanvasPoint, color: string, replayOp?: Extract<CanvasOperation, { type: "fill" }>, done?: (error?: Error) => void) => {
         if (!worker) {
           try {
             worker = new Worker(new URL("./fill.worker.ts", import.meta.url));
           } catch {
             propsRef.current.onError?.("Fill worker is unavailable.");
+            done?.(new Error("Fill worker is unavailable."));
             return;
           }
         }
-        const actionId = uid();
+        const actionId = replayOp?.actionId ?? uid();
         const before = snapshot();
         // Composite transparency over white before filling so erased pixels match the visible surface.
         const layer = document.createElement("canvas");
@@ -167,10 +180,13 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
         ).data;
         busy = true;
         status();
+        cancelFill = () => done?.(new Error("Canvas was disposed during fill"));
         const fail = (message: string) => {
           if (!alive) return;
           busy = false;
+          cancelFill = undefined;
           propsRef.current.onError?.(message);
+          done?.(new Error(message));
           status();
           drain();
         };
@@ -203,6 +219,8 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
             });
           }
           busy = false;
+          cancelFill = undefined;
+          done?.();
           status();
           drain();
         };
@@ -231,7 +249,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
       };
       const down = (e: PointerEvent) => {
         e.stopImmediatePropagation();
-        if (!artist || busy || active || e.button !== 0) return;
+        if (!artist || busy || active || replaying || replayPending || replayStroke || propsRef.current.readOnly || e.button !== 0) return;
         e.preventDefault();
         const started = performance.now();
         const p = point(e, started);
@@ -318,8 +336,72 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
       const hidden = () => {
         if (document.hidden) finish();
       };
+      // Replay uses the exact same Atrament setup and point calls as pointer capture.
+      let replayStroke: { actionId: string; before: Snapshot; last: CanvasPoint; previousX: number; previousY: number } | undefined;
+      const replay = async (operations: CanvasOperation[], reset: boolean) => {
+        await ready;
+        if (busy) await new Promise<void>(resolve => queue.push(resolve));
+        if (active) finish();
+        if (!alive) throw new Error("Canvas was disposed");
+        replaying = true;
+        status();
+        try {
+          if (reset) {
+            if (replayStroke && artist) { const p = external(replayStroke.last); artist.endStroke(p.x, p.y); }
+            context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            hasInk = false; history = new BitmapHistory(); seen.clear(); replayStroke = undefined;
+          }
+          for (const op of operations) {
+            if (seen.has(op.opId)) continue;
+            if (!artist) throw new Error("Canvas is unavailable");
+            if (op.type === "stroke.start") {
+              if (replayStroke) throw new Error("Overlapping strokes in drawing journal");
+              const ext = external(op.point);
+              artist.mode = op.settings.tool === "eraser" ? "erase" : "draw";
+              artist.color = op.settings.color;
+              artist.weight = (op.settings.size * canvas.offsetWidth) / CANVAS_WIDTH;
+              artist.adaptiveStroke = false; artist.pressureLow = 1; artist.pressureHigh = 1;
+              const before = snapshot();
+              artist.beginStroke(ext.x, ext.y);
+              const next = artist.draw(ext.x + 0.1, ext.y, ext.x, ext.y, op.point.pressure);
+              replayStroke = { actionId: op.actionId, before, last: op.point, previousX: next.x, previousY: next.y };
+            } else if (op.type === "stroke.append") {
+              if (!replayStroke || replayStroke.actionId !== op.actionId) throw new Error("Stroke append without matching start");
+              for (const p of op.points) {
+                const ext = external(p);
+                const next = artist.draw(ext.x, ext.y, replayStroke.previousX, replayStroke.previousY, p.pressure);
+                replayStroke.previousX = next.x; replayStroke.previousY = next.y; replayStroke.last = p;
+              }
+            } else if (op.type === "stroke.end") {
+              if (!replayStroke || replayStroke.actionId !== op.actionId) throw new Error("Stroke end without matching start");
+              const ext = external(op.point);
+              artist.endStroke(ext.x, ext.y); history.push(op.actionId, replayStroke.before);
+              replayStroke = undefined; hasInk = detectInk();
+            } else {
+              if (replayStroke) throw new Error("Drawing command during an unfinished stroke");
+              if (op.type === "fill") await new Promise<void>((resolve, reject) => fill(op.point, op.color, op, error => error ? reject(error) : resolve()));
+              else if (op.type === "canvas.clear") {
+                const before = snapshot(); context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT); hasInk = false; history.push(op.actionId, before);
+              } else {
+                const entry = op.type === "history.undo" ? history.undo(snapshot()) : history.redo(snapshot());
+                if (!entry || entry.actionId !== op.targetActionId) throw new Error("History target does not match drawing journal");
+                restore(entry.snapshot);
+              }
+            }
+            seen.add(op.opId);
+          }
+        } finally { replaying = false; status(); }
+      };
+      const scheduleReplay = (operations: CanvasOperation[], reset: boolean) => {
+        replayPending++; status();
+        const result = replayQueue.then(() => replay(operations, reset)).finally(() => { replayPending--; status(); });
+        replayQueue = result.catch(() => {});
+        return result;
+      };
       const engine: Engine = {
         finish,
+        hydrate: operations => scheduleReplay(operations, true),
+        applyOperations: operations => scheduleReplay(operations, false),
         undo: () =>
           command(() => {
             const entry = history.undo(snapshot());
@@ -376,15 +458,19 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
             width: CANVAS_WIDTH,
             height: CANVAS_HEIGHT,
           });
+          readyResolve();
           status();
         })
-        .catch(() =>
-          propsRef.current.onError?.("Could not initialize drawing canvas."),
-        );
+        .catch(() => {
+          readyReject(new Error("Could not initialize drawing canvas."));
+          propsRef.current.onError?.("Could not initialize drawing canvas.");
+        });
       status();
       return () => {
         finish();
         alive = false;
+        cancelFill?.();
+        readyReject(new Error("Canvas was disposed"));
         engineRef.current = null;
         queue = [];
         worker?.terminate();
@@ -399,7 +485,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
     }, []);
     useEffect(() => {
       engineRef.current?.finish();
-    }, [props.settings.tool, props.settings.color, props.settings.size]);
+    }, [props.settings.tool, props.settings.color, props.settings.size, props.readOnly]);
     return (
       <canvas
         ref={canvasRef}
@@ -409,6 +495,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
         aria-label="Drawing canvas"
         aria-busy="true"
         data-ready="false"
+        data-readonly={String(!!props.readOnly)}
         data-testid="drawing-canvas"
       />
     );

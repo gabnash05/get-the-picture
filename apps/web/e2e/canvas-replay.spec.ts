@@ -1,0 +1,110 @@
+import { expect, test, type Page } from "@playwright/test";
+
+async function fixture(page: Page, name: RegExp) {
+  await page.goto("/review/");
+  await page.getByRole("button", { name }).click();
+  const canvas = page.getByLabel("Drawing canvas");
+  await expect(canvas).toHaveAttribute("data-ready", "true");
+  await expect(canvas).toHaveAttribute("aria-busy", "false");
+  return canvas;
+}
+async function position(page: Page, x: number, y: number) {
+  const box = (await page.getByLabel("Drawing canvas").boundingBox())!;
+  return { x: box.x + x * box.width / 1024, y: box.y + y * box.height / 768 };
+}
+async function clickAt(page: Page, x: number, y: number) {
+  const p = await position(page, x, y); await page.mouse.click(p.x, p.y);
+}
+async function line(page: Page, a: [number, number], b: [number, number]) {
+  const from = await position(page, ...a), to = await position(page, ...b);
+  await page.mouse.move(from.x, from.y); await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 12 }); await page.mouse.up();
+}
+async function pixels(page: Page) {
+  return page.getByLabel("Drawing canvas").evaluate(async (canvas: HTMLCanvasElement) => {
+    const data = canvas.getContext("2d")!.getImageData(0, 0, 1024, 768).data;
+    const hash = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(hash));
+  });
+}
+async function journal(page: Page) {
+  return page.evaluate(() => new Promise<{ count: number; lastType: string | null }>((resolve, reject) => {
+    const request = indexedDB.open("more-than-meets-drawing-journal", 1);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const db = request.result;
+      const read = db.transaction("journals", "readonly").objectStore("journals").getAll();
+      read.onerror = () => reject(read.error);
+      read.onsuccess = () => { const entries = read.result.flat(); resolve({ count: entries.length, lastType: entries.at(-1)?.type ?? null }); db.close(); };
+    };
+  }));
+}
+
+test("restores identical pixels and does not echo replay operations", async ({ page }) => {
+  const canvas = await fixture(page, /Drawing.*drawer/);
+  await expect(canvas).toHaveAttribute("data-readonly", "false");
+  await clickAt(page, 180, 180); // dot
+  await line(page, [250, 250], [550, 250]);
+  await page.getByRole("button", { name: "eraser", exact: true }).click();
+  await clickAt(page, 350, 250);
+  await page.getByRole("button", { name: "fill", exact: true }).click();
+  await page.getByRole("button", { name: "Color #FF4343" }).click();
+  await clickAt(page, 100, 100);
+  await expect(canvas).toHaveAttribute("aria-busy", "false");
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await page.getByRole("button", { name: "Clear", exact: true }).click();
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect.poll(async () => (await journal(page)).lastType).toBe("history.undo");
+  const beforeCount = (await journal(page)).count, before = await pixels(page);
+  await page.reload();
+  await expect(canvas).toHaveAttribute("data-ready", "true");
+  await expect(canvas).toHaveAttribute("data-readonly", "false");
+  await expect(canvas).toHaveAttribute("aria-busy", "false");
+  await expect.poll(() => pixels(page)).toEqual(before);
+  expect((await journal(page)).count).toBe(beforeCount);
+});
+
+test("guest cannot paint on the shared canvas", async ({ page }) => {
+  const canvas = await fixture(page, /Drawing.*guesser/);
+  await expect(canvas).toHaveAttribute("data-readonly", "true");
+  const before = await pixels(page);
+  await line(page, [200, 200], [500, 200]);
+  expect(await pixels(page)).toEqual(before);
+  await expect(page.getByRole("button", { name: "brush", exact: true })).toHaveCount(0);
+});
+
+
+test("local recovery closes an interrupted stored stroke", async ({ page }) => {
+  const canvas = await fixture(page, /Drawing.*drawer/);
+  await expect(canvas).toHaveAttribute("data-readonly", "false");
+  await clickAt(page, 100, 100);
+  await expect.poll(async () => (await journal(page)).lastType).toBe("stroke.end");
+  await page.evaluate(() => new Promise<void>((resolve, reject) => {
+    const request = indexedDB.open("more-than-meets-drawing-journal", 1);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const db = request.result, tx = db.transaction("journals", "readwrite");
+      const store = tx.objectStore("journals"), cursor = store.openCursor();
+      cursor.onsuccess = () => {
+        const entry = cursor.result;
+        if (!entry) { reject(new Error("No journal to seed")); return; }
+        const at = 1234, actionId = "interrupted-test";
+        entry.update([...entry.value,
+          { type: "stroke.start", opId: "interrupted-start", actionId, at, settings: { tool: "brush", color: "#181321", size: 12 }, point: { x: 300, y: 300, time: 0 } },
+          { type: "stroke.append", opId: "interrupted-append", actionId, at, points: [{ x: 400, y: 300, time: 20 }] },
+        ]);
+      };
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => reject(tx.error);
+    };
+  }));
+  await page.reload();
+  await expect(canvas).toHaveAttribute("data-readonly", "false");
+  await expect.poll(async () => (await journal(page)).lastType).toBe("stroke.end");
+  const pixel = await canvas.evaluate((element: HTMLCanvasElement) => Array.from(element.getContext("2d")!.getImageData(350, 300, 1, 1).data));
+  expect(pixel[3]).toBeGreaterThan(0);
+  const count = (await journal(page)).count;
+  await clickAt(page, 500, 500);
+  await expect.poll(async () => (await journal(page)).count).toBeGreaterThan(count);
+});

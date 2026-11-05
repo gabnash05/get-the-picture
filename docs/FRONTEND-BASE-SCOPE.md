@@ -64,3 +64,6 @@ For the final application, ordinary refreshes and reconnects must preserve the a
 ## Readiness to replace the shell
 
 The user should first be able to draw, change tools, fill regions, undo and redo edits, resize without losing the current image, and inspect continuous console batches. Once those functions are validated, ask for the user's UI/UX direction and replace this temporary shell while retaining the validated canvas behavior.
+
+> Historical base scope: the approved room-flow implementation and current integration contract supersede the temporary entry, console-only, and blank-refresh descriptions below. See [FRONTEND-ROOM-INTEGRATION.md](FRONTEND-ROOM-INTEGRATION.md).
+
