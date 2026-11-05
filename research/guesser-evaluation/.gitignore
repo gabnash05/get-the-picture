@@ -1,0 +1,21 @@
+# Environment and local configuration
+.venv/
+.env
+
+# Python and notebook caches
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+.coverage*
+
+# Large local-only data and model artifacts
+.cache/
+data/raw/
+data/staging/
+data/records/
+models/
+checkpoints/
+runs/
+outputs/
