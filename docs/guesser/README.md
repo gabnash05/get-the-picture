@@ -1,9 +1,9 @@
 # Guesser planning package
 
-The two outputs below were reviewed and accepted in the Guesser planning session on 5 November 2026. They are preserved as reviewed.
+The two outputs below were reviewed and accepted in the Guesser planning session on 5 November 2026. The model/evaluation design is retained; its data sections now follow the slimmer numbered workflow.
 
 - [Complete model and data plan](guesser-model-plan.md): responsibilities, all-345-category Quick, Draw! preparation, partial-view generation, ViT-Tiny adaptation, validation, and inference requirements.
-- [Interactive workflow visualization](guesser-flow.html): an offline-capable HTML companion with a real timestamped-drawing replay, background-fill illustration, and a dedicated model-validation section. Open it in a browser; its Markdown download link points to the sibling file.
+- [Interactive workflow visualization](guesser-flow.html): an offline-capable companion for the six numbered data stages, loader route, worked timestamp example and memory illustration. Full model/evaluation requirements remain in the Markdown plan.
 
 These are implementation plans. No trained weights, full dataset download, model accuracy result, or production AI service is included.
 
@@ -19,3 +19,14 @@ The reviewed outputs contain team-oriented runtime examples. The repository's [s
 - Scoring and service-failure eligibility remain authoritative in NestJS, not in the model service.
 
 The data/model experiment remains unchanged: all 345 Quick, Draw! classes, original-drawing splits before partial views, shape-based preprocessing with a fill/background validation pilot, and a controlled complete-only versus partial-training comparison. This direct-depiction Guesser plan does not establish recognition of indirect semantic or cultural visual references from the broader research design.
+
+
+## Implemented data tooling
+
+The [Guesser data package](../../models/guesser/data/README.md) uses Python 3.13 and uv with six literal numbered stages: download, prepare, optional preview, export, loader and image creation. Real defaults live in Python settings. There are no approval CSVs, sign-offs, code/document fingerprints, freeze step or global download budget. See the [current runbook](../../models/guesser/data/RUNBOOK.md).
+
+The [evaluation scaffold](../../models/guesser/evaluation/README.md) is now in the agreed model layout and keeps its separate Python 3.12 lock. Model batching, evaluation metrics and the inference service remain future work. Historical data reports/ZIPs are retained as historical evidence rather than rebuilt by this refactor.
+
+## Library implementation guidance
+
+The [current library map](../../models/guesser/LIBRARIES.md) requires timm, Lightning, PyTorch DataLoader, torchvision, TorchMetrics and FastAPI/Pydantic for the corresponding standard tasks. It supplements the retained reviewed plan; its uv setup requirement supersedes the historical pip commands in that plan. The model libraries and training/service code remain for their implementation owners.

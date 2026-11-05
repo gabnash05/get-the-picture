@@ -16,6 +16,12 @@ The working canvas base is in [apps/web](apps/web). It includes guest names and 
 
 See the [frontend run/build instructions](apps/web/README.md), [implementation plan](docs/FRONTEND-IMPLEMENTATION-PLAN.md), and [temporary UI scope](docs/FRONTEND-BASE-SCOPE.md). Build `apps/web` with `npm run build`; its `out/` directory can be served by a static host. No hosting provider has been configured by this implementation.
 
+## Guesser data and evaluation
+
+The agreed [models layout](models/README.md) separates Guesser data, training, inference, evaluation and checkpoints from Referee work. The [data package](models/guesser/data/README.md) uses Python 3.13 and uv: numbered stages download/clean/sample, prepare splits, optionally preview and export with one data audit. Timed image creation uses the shared foreground/edges preprocessors; no approvals or freeze step are required. See the [runbook](models/guesser/data/RUNBOOK.md).
+
+The [evaluation workspace](models/guesser/evaluation/README.md) now contains the incoming Python 3.12/uv notebook scaffold. It has environment-check code, not an evaluator, inference service, trained checkpoint or accuracy result. Training/batching and serving remain their owners' next work. No full dataset download was run for this refactor.
+
 ## Game modes
 
 **Individual is the default when a room or match has no explicit mode selection.** It uses one drawer, one shared canvas, individual solve records and an individual leaderboard. Do not implement it by grouping everyone into one team. The temporary frontend's sample team panels are fixtures, not the default gameplay contract.
@@ -35,7 +41,7 @@ The proposed stack is **Next.js** for the web application, **NestJS + Socket.IO*
 
 ## Research evaluation workspace
 
-`research/guesser-evaluation/` is a uv-managed, cross-platform Python/Jupyter workspace for auditing held-out inputs, evaluating frozen model checkpoints, measuring inference latency, and preparing the live inference interface. The environment and smoke-check notebook are set up; the evaluator, inference service, trained weights, and performance results remain future work. See its [setup, usage, and notebook merge-conflict guide](research/guesser-evaluation/README.md).
+`models/guesser/evaluation/` is a uv-managed, cross-platform Python/Jupyter workspace for auditing held-out inputs, evaluating frozen model checkpoints, measuring inference latency, and preparing the live inference interface. The environment and smoke-check notebook are set up; the evaluator, inference service, trained weights, and performance results remain future work. See its [setup, usage, and notebook merge-conflict guide](models/guesser/evaluation/README.md).
 
 ## Project focus
 

@@ -1,6 +1,6 @@
 # Guesser model and data plan
 
-Decisions agreed on 4 November 2026 (Asia/Manila). Delivery horizon: next week; the seven workdays below are a relative work plan, not an agreed calendar deadline.
+Initial decisions agreed on 4 November 2026; data workflow simplified on 5 November 2026 (Asia/Manila). Delivery horizon: next week; the seven workdays below are a relative work plan, not an agreed calendar deadline.
 
 **Scope:** Guesser only. All 345 Quick, Draw! categories. Direct depictions first. No new human drawing collection. A transformer is required. This document specifies work to implement and validate; it does not report a trained model or measured recognition performance.
 
@@ -51,7 +51,7 @@ The user owns **Data**. The other two group members own **Model** and **Validati
 
 ### The first shared contract
 
-Freeze these on Day 1:
+Agree these on Day 1:
 
 - `labels.json`: ordered list of 345 class IDs and exact source names.
 - `dataset_version` and sampling/cleaning version, with seed `198173`.
@@ -63,317 +63,64 @@ Freeze these on Day 1:
 
 ## 3. Which data files to use
 
-Use the official **raw .ndjson** files as the master source. Do not mix independently sampled raw, simplified and bitmap variants as if they were different drawings.
+Use raw Quick, Draw! category NDJSON files. One line describes an original drawing with a string ID, category, metadata and separate `[x, y, time]` stroke arrays. Raw timestamps allow elapsed-time prefixes; the simplified bitmap/vector releases do not replace that timing input. AtyPict is outside this Guesser scope.
 
-| Quick, Draw! representation | Shape / contents | Timing | Use here |
-| --- | --- | --- | --- |
-| Raw NDJSON | One JSON object per line. A drawing is a ragged list of strokes; stroke s is `[x_s, y_s, t_s]` with equal-length coordinate/time arrays | Per-point milliseconds | **Master source** for timestamp-cut incomplete drawings |
-| Simplified NDJSON | Ragged strokes `[x_s, y_s]`, coordinates normalized into a 256-square region | Point timing removed | Optional parser/visual reference; not the temporal master |
-| Binary .bin | Packed simplified drawings and metadata | No original per-point times | Avoid for this pipeline |
-| Bitmap .npy | Flattened 28x28 images. A probed cat file is uint8 `[123202, 784]`; N varies by category | None | Complete-image baseline data only; cannot recover actual drawing progress |
-| Sketch-RNN .npz | Preprocessed variable-length stroke sequences in train/valid/test arrays | Not the raw timestamp arrays | Not needed for the selected image-model pipeline |
+Keep the official 345-category order. The model target is its class ID; the word, recognized flag, country, ID and timestamps do not enter the vision model as features. Valid `recognized=false` drawings remain eligible.
 
-Source: [official format documentation](https://github.com/googlecreativelab/quickdraw-dataset). The raw format was also directly checked using the first 64 KiB of cat, bicycle and alarm clock files. This was a schema probe, not a dataset-wide audit.
+Download the full selected category streams but retain a deterministic balanced sample. The goal is 5,000 eligible originals per class, not all 50 million originals for training.
 
-The raw fields include `key_id`, `word`, `drawing`, `recognized`, `timestamp` and `countrycode`. Keep IDs as strings. The top-level creation timestamp is different from point times. The old game's `recognized` flag is neither a human quality label nor your model's confidence: retain it for auditing and do not use it as an input feature.
+## 4. Download and local environment
 
-The original attachment also showed AtyPict. The user clarified that this plan uses Quick, Draw! only. AtyPict is therefore outside this Guesser pipeline.
+Use the standalone Python 3.13/uv project at `models/guesser/data/`. Its real defaults are in `src/settings.py`; descriptive JSON configs have been removed. The relocated notebook/evaluation project is `models/guesser/evaluation/`, with a separate Python 3.12 lock. This refactor does not unify those environments.
 
-### One original record
+Run the [data README setup](../../models/guesser/data/README.md), then:
 
-~~~json
-{
-  "key_id": "example-id-as-string",
-  "word": "cat",
-  "recognized": true,
-  "drawing": [
-    [[100, 110, 120], [80, 85, 90], [0, 30, 60]],
-    [[130, 140], [90, 100], [120, 160]]
-  ]
-}
-~~~
+```powershell
+.\guesser-data.ps1 download
+.\guesser-data.ps1 prepare
+.\guesser-data.ps1 preview   # optional
+.\guesser-data.ps1 export
+```
 
-This example has two strokes, with three and two points. Real S and N_s vary; do not turn the raw dataset into a fixed `[S,3,N]` tensor by assuming all drawings have the same lengths.
+The model teammate performs the eventual full-source download. Missing inventory is fetched automatically; generation, byte-count and MD5 checks protect completion. The dated bundled inventory totals approximately 181.43 GiB. Raw files are streamed, not retained in full. Two streams run by default; peak RAM/disk and throughput remain unmeasured at production scale.
 
-## 4. Download and local environment: exact operating procedure
+Keep 5,500 candidate IDs/class using the smallest `select-v1` SHA-256 priorities with seed 198173 and string-ID tie-breaks. Matching completed classes resume; incomplete classes restart from the beginning. No download-budget ledger, per-source database, automatic conflict re-download or code/document freeze is required.
 
-### 4.1 Create a separate Python workspace
+## 5. Cleaning and retained-candidate conflicts
 
-Keep this work independent of the frontend Node installation. Use the same Python minor version on all three laptops; Python 3.11–3.13 is a reasonable supported starting range for the pinned setup below.
+Cleaning occurs during `01-download.py`. Preserve stroke order, pauses, valid dots, nonzero starting times and valid unrecognized records. Remove empty strokes and exact repeated x/y/time triples. Reject malformed arrays, unsafe/nonfinite coordinates, invalid chronology, no full-drawing extent and zero duration. Normalize signed zero and keep IDs as strings.
 
-PowerShell, from a directory chosen for the Guesser work:
+Only retained candidates receive ID conflict tracking. Conflicting retained IDs keep their ranked slot until streaming ends, preventing order-dependent replacement. Preparation uses one temporary SQLite index for retained identities, content/trajectory hashes and candidate offsets; it does not store another full JSON copy.
 
-~~~powershell
-New-Item -ItemType Directory -Force guesser-work
-Set-Location guesser-work
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install torch==2.7.1 torchvision==0.22.1 --index-url https://download.pytorch.org/whl/cu118
-.\.venv\Scripts\python.exe -m pip install timm pillow numpy pandas pyarrow scikit-learn opencv-python-headless fastapi uvicorn pydantic safetensors
-.\.venv\Scripts\python.exe -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')"
-.\.venv\Scripts\python.exe -m pip freeze > requirements.lock.txt
-~~~
+Quarantine retained ID/content/label conflicts and cross-label identical full trajectories; never relabel automatically. Same-label exact trajectory duplicates keep a deterministic best representative. This does not claim to discover conflicts involving discarded source records.
 
-The pinned torch/torchvision pair and CUDA 11.8 wheel source are listed by [PyTorch](https://pytorch.org/get-started/previous-versions/). They are a conservative Windows/NVIDIA starting point, not a claim that this environment was installed here. Verify the NVIDIA driver and CUDA availability on each training/inference laptop. A CUDA toolkit installation is not the first troubleshooting step for a wheel that already bundles its runtime.
-
-The local machine queried during planning reported a GTX 1650 Ti with 4 GiB VRAM. Start at physical batch 8, lower it if needed, and use accumulation for a larger effective batch. Other group machines may support larger batches. Record the actual device and measured throughput.
-
-After a successful smoke run, use the same lock file on the group machines. Record model checkpoint revision/hash as well as package versions.
-
-Suggested directories:
-
-~~~text
-guesser-work/
-  configs/                 # versioned data, training, inference settings
-  data/
-    source-inventory/      # category registry, object metadata, receipts
-    staging/               # sampled raw records, temporary reserve candidates
-    records/               # indexed original drawings, one class file or shards
-    manifests/             # train / validation / test drawing membership
-    qa/                    # cleaning counts and reviewed contact sheets
-  src/                     # preparation, rendering, loading, training, serving
-  runs/                    # training configurations and logs
-  models/                  # frozen model package
-  reports/                 # validation, final test, latency
-~~~
-
-Add data, model weights, caches, virtual environments and large run artifacts to the appropriate local ignore rules before working in Git. Track code, recipes, registry, small fixtures and report summaries. Arrange a shared transfer location for the selected package rather than having every teammate repeat the 181 GiB source scan.
-
-### 4.2 Freeze the source inventory
-
-Download the exact official category file:
-
-~~~powershell
-New-Item -ItemType Directory -Force data\source-inventory
-Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/googlecreativelab/quickdraw-dataset/master/categories.txt' -OutFile 'data\source-inventory\categories.txt'
-(Get-Content -LiteralPath 'data\source-inventory\categories.txt').Count
-Get-FileHash -Algorithm SHA256 -LiteralPath 'data\source-inventory\categories.txt'
-~~~
-
-Expected category count: **345**. Preserve this file's line order as class IDs 0–344. Do not sort names differently in the API or reconstruct IDs from directory enumeration. Preserve exact source spelling and capitalization; display names may have separate formatting.
-
-Public raw object pattern:
-
-~~~text
-https://storage.googleapis.com/quickdraw_dataset/full/raw/<URL-encoded category>.ndjson
-~~~
-
-Example: [alarm clock raw file](https://storage.googleapis.com/quickdraw_dataset/full/raw/alarm%20clock.ndjson). Spaces must be URL encoded.
-
-Get object metadata from the public [Cloud Storage listing API](https://storage.googleapis.com/storage/v1/b/quickdraw_dataset/o?prefix=full%2Fraw%2F&maxResults=1000). Save size, generation, MD5/CRC32C metadata and update time for each object. Check pagination and require a one-to-one match with the 345 registered names.
-
-A listing checked on 4 November 2026 contained 345 raw category objects, totaling **194,810,597,157 bytes = 181.43 GiB**. Recheck before the real scan. This is transfer volume, not a requirement to store every source file.
-
-Ideal transfer-only lower bounds are approximately 21.6 hours at 20 Mbps, 8.7 hours at 50 Mbps, or 4.3 hours at 100 Mbps. Parsing, cleaning, retries and shared bandwidth add time.
-
-### 4.3 Stream complete files; retain a balanced sample
-
-**Agreed method:** read each category file to its end once, retaining the best deterministic random priorities. Do not stop at the first 5,000 records.
-
-- Final target: 5,000 structurally valid, distinct drawings per class.
-- Initially retain 5,500 candidates per class, using 500 as a duplicate-removal reserve.
-- Priority: SHA-256 of `"select-v1|198173|" + key_id`, interpreted as an integer.
-- Keep the 5,500 smallest priorities with a bounded max-heap.
-- Structural cleaning precedes eligibility for the retained sample.
-- Include valid examples regardless of `recognized=true/false`. Report that flag's distribution; it is not a rejection rule.
-- Read at most 2–3 category streams concurrently to begin. Measure CPU, RAM, network and thermal behavior before increasing concurrency.
-- Keep source hashes/counts while streaming and verify source size and hash before declaring a class complete.
-- Write a sampled class and a completion receipt atomically only after a successful full scan.
-- Resume by skipping only classes with matching source generation, recipe and completed receipt. If a stream fails, retry that class from the beginning unless a fully tested sampler-state/byte-offset resume mechanism exists.
-- Do not use random HTTP byte offsets as if they were uniform random drawings; line lengths differ.
-- You may start model work with the first completed class packages, but final training/evaluation must include all 345 classes.
-
-One full raw category can be downloaded for debugging with the following real command. It is an alternative inspection operation, not the storage strategy for all classes:
-
-~~~powershell
-New-Item -ItemType Directory -Force data\raw-debug
-curl.exe --fail --location --retry 5 --continue-at - --output "data\raw-debug\cat.ndjson" "https://storage.googleapis.com/quickdraw_dataset/full/raw/cat.ndjson"
-~~~
-
-The data owner implements the streaming preparer from the algorithms in Sections 5–7. The file/module names in this plan are proposed deliverables; no preparation CLI or full data download has been created by this planning session. The reference functions in Section 15 can be copied into that implementation.
-
-Start by scanning one whole class and record bytes/second, valid records/second, peak RAM and retained-file size. Extrapolate from measured values. Reserve space for staging, final indexed records, manifests, model/environment caches and a temporary export copy. Avoid storing every prefix PNG: its uncompressed volume would be roughly 864 GB for all ten views of the 1.725M-drawing target, even before metadata.
-
-## 5. Cleaning: keep the original meaning and chronology
-
-Produce a rejection/repair log by class and reason. Retain the immutable selected raw record or an audit reference so every cleaning decision can be traced.
-
-| Check | Action |
-| --- | --- |
-| JSON invalid, missing ID/word/drawing | Reject and count reason |
-| Word does not match the requested category | Quarantine; do not silently relabel |
-| Empty drawing or no visible geometric extent | Reject as unusable for this task |
-| Stroke does not have three arrays, or lengths differ | Reject; do not guess missing times |
-| Non-numeric/non-finite coordinates or invalid point times | Reject |
-| Negative or decreasing point times, including across strokes | Quarantine/reject; do not sort points to repair chronology |
-| First point time is nonzero | Preserve raw times; subtract the first valid point time when calculating relative duration |
-| Consecutive identical x/y/t triples | May remove the exact duplicates and log the repair |
-| Same x/y at different times | Keep: it can encode a pause |
-| Single-point stroke within an otherwise valid drawing | Keep and render as a dot |
-| Empty strokes | Remove with a recorded repair; reject the drawing if none remain |
-| Zero total duration | Quarantine from the timestamp-prefix experiment; do not invent timing |
-| Very long or unusual drawings | Flag and inspect. Set documented resource limits only after measuring; do not discard complex classes just to make metrics look better |
-| `recognized=false` | Keep when structurally valid; not an “incorrect” training class |
-| Country and wall-clock creation time | Audit metadata only; never model features |
-| Very simple category such as line, circle or square | Keep; simplicity is not corruption |
-
-A prompt label describes the intended concept. It does not certify that a particular partial view is already recognizable. Do not discard difficult early prefixes simply because the model gets them wrong.
-
-### Duplicate handling before the split
-
-1. Deduplicate retained candidates by `key_id`. If the same ID has inconsistent contents, quarantine the conflict.
-2. Compute an exact full-trajectory hash over the cleaned stroke arrays, with a documented canonical serialization. At minimum include the complete x/y/t values and stroke boundaries.
-3. Collapse same-class exact trajectory duplicates deterministically.
-4. Quarantine cross-label exact-trajectory conflicts for review rather than assigning an arbitrary label.
-5. Fill each class back to 5,000 from its ranked reserve. If the reserve is insufficient, enlarge it and rescan that class; fail visibly instead of silently shrinking or dropping the class.
-6. Record final counts and check global ID/trajectory uniqueness again.
-
-This guarantees exact-duplicate separation among the selected package, not a proof that all visually similar drawings or drawings by the same person have been removed. Quick, Draw!'s documented fields do not provide an artist ID; call the split **drawing-disjoint**, not drawer-disjoint.
-
-Use visual QA on a deterministic contact sheet for every class: for example 8 complete views and 4 corresponding 50% views per class, plus all flagged exceptions. Divide checking between Data and Validation & Inference. Log obvious label mismatches or written-word-only drawings using a fixed review rule. Do not relabel an ambiguous image based on the candidate model's prediction. After any removal, refill from the reserve before freezing the split.
+Optional manual exclusions are one ID per line in `excluded-ids.txt`. Per-class approval CSVs and sign-offs have been removed. If exclusions/duplicates leave a class short, explicitly download a larger reserve for that class and prepare again.
 
 ## 6. Split original drawings, then generate views
 
-After cleaning and duplicate handling:
+Select 5,000 eligible originals/class, sort by the separate `split-v1` hash and ID, then assign exactly 4,000 train / 500 validation / 500 test. Across 345 categories this is 1,380,000 / 172,500 / 172,500 originals. Every view of an original remains in its partition.
 
-1. For each category, independently rank its 5,000 retained IDs using SHA-256 of `"split-v1|198173|" + key_id`.
-2. First 4,000 IDs: training; next 500: validation; last 500: final test.
-3. Freeze membership in manifests and record the manifest hashes.
-4. Derive every partial view, full view, color/fill transformation and augmentation from that assigned original. All versions inherit its split.
-5. Give the model owner training and validation packages. The validation owner keeps the final test evaluation separate until the model, preprocessor and decision policy are frozen.
-6. Make a small tuning subset from validation by deterministic ID ranking, never by moving test drawings into validation.
+Write uncompressed seekable UTF-8 JSONL under `prepared/records/{split}/` and Parquet indexes under `prepared/manifests/`. Manifests retain identity, class, split, record path, byte offset/length, timing, recognized flag, quality counts and trajectory hash. No selected/staging-selected copies are required.
 
-| Partition | Per category | All 345 categories |
-| --- | ---: | ---: |
-| Training originals | 4,000 | 1,380,000 |
-| Validation originals | 500 | 172,500 |
-| Final-test originals | 500 | 172,500 |
-| Total originals | 5,000 | 1,725,000 |
-
-These are planned final counts, contingent on the cleaning/refill checks. They are not counts already downloaded.
-
-A complete view of drawing A in training and a 30% view of drawing A in testing is leakage. Renaming its file or rerendering it does not make it a new independent example.
-
-### Store originals efficiently
-
-Use per-class indexed JSONL files or equivalently documented record shards. Do not load the whole raw corpus into pandas or a single Python list.
-
-A practical representation is:
-
-- `records/c000.jsonl` through `records/c344.jsonl` containing original cleaned strokes.
-- Manifests in Parquet or CSV with at least: `drawing_id`, `group_id`, `class_id`, `record_file`, `byte_offset`, `byte_length`, `split`, `recognized`, `stroke_count`, `point_count`, `duration_ms`, `trajectory_hash`.
-- `labels.json` with `class_id` and `source_name`.
-- `dataset-receipt.json` with source-object versions, recipes, actual counts, source/manifest checksums and attribution.
-
-Byte offsets require uncompressed seekable JSONL. A gzip file can be a transfer archive; decompress it before using ordinary byte-offset random access. Each loader worker needs its own file handles. Cache a few open shards/records per worker; do not duplicate the entire Python object graph in every Windows DataLoader worker.
-
-Data loader labels come from the manifest. Only the rendered image tensor enters the neural network.
+`dataset-summary.json` records source information, seed, ordered labels, counts, preparation statistics and record/manifest hashes. It does not fingerprint source files or documentation. Export performs one final audit; optional standalone auditing is not another required phase.
 
 ## 7. Turn timestamps into incomplete training examples
 
-For a drawing with point times t, let t0 be its first point time, t1 its final point time, and D = t1 - t0.
+`05-loader.py` reads one indexed original; `06-images.py` cuts, renders and preprocesses it. The image enters the transformer and class ID is the separate training target. PyTorch Dataset/DataLoader batch integration is model-owner work, not implemented by the data package.
 
-At completion fraction f:
+For partial-training adaptation, choose 20% complete views and otherwise a uniformly sampled elapsed-time cut in 10%-90%. Seed choices by drawing ID, epoch and purpose, independently of worker order. Blank training views have bounded retries; uncertain/skipped outcomes remain explicit. The complete-only baseline uses the full original.
 
-`cutoff = t0 + f * D`
+Evaluation always emits ten fixed 10%-100% elapsed-time stages, retaining blanks, uncertainty and unchanged images in reporting. Cuts are inclusive, preserve separate strokes/pauses/dots and use first-to-last elapsed time. Cropping/scaling uses only visible prefix points; future bounds must not leak into early images.
 
-Keep only points already recorded at or before cutoff, preserving stroke boundaries and chronological order. An ongoing stroke is truncated to its observed points. Do not connect it to a later point, interpolate toward a future coordinate, join separate strokes, or reveal later erasures.
+## 8. Rendering, color, fill and background handling
 
-### Training view sampling
+Use the same shared image recipe for training and live visible-canvas snapshots. Raw Quick, Draw! points render as dark strokes on white, using a 512-square canvas, 448-pixel fit and 2x supersampling; evaluation width is 6 and training width is seeded in 3-12.
 
-At each epoch, each sampled training original supplies one view:
+`foreground` is the provisional default (formerly foreground): estimate a dominant border background and retain foreground shapes, including filled silhouettes. `edges` remains available (formerly edges): union per-channel Canny boundaries. Foreground can return uncertain on mixed borders; edges can lose low-contrast evidence or double-outline thick strokes. Neither method automatically falls back to the other.
 
-- 20% probability: complete drawing, f = 1.
-- 80% probability: f sampled uniformly from 0.10 to 0.90.
-- Seed view sampling by run seed, drawing ID and epoch so runs can be reproduced.
-- Sample originals uniformly; do not let a 20-stroke drawing contribute 20 times the weight of a one-stroke drawing.
-- If a sampled cut has no visible ink, resample that training cut or skip it and report it. Do not train a blank image as a confidently identifiable word.
-- In evaluation, keep blank stages in the denominator and let the policy pass. Do not hide them by silently discarding them.
+Fit the current visible shape within 192 pixels, center on 224, repeat as three channels and normalize by mean/std 0.5. The result is float32 `[3,224,224]`. Use one method consistently per model and do not normalize twice.
 
-### Validation and final-test views
-
-Use the fixed grid `f = [0.1, 0.2, ..., 1.0]` for every held-out original. Empty/unchanged prefixes are valid observations. Mark identical consecutive views so they can be cached without being counted as independent drawings.
-
-Timing fractions are defined using the recorded completed drawing for **offline evaluation only**. The live model is never told the final duration, percent completion, final number of points or final bounding box. A Quick, Draw! recording's 50% stage is not the 30-second mark of a 60-second game round.
-
-Here “100%” means the end of the recorded trajectory. It is not an annotation certifying that the intended picture is semantically finished. Report fractions as recorded drawing-time progress, and do not claim that an inherently ambiguous first mark should already identify its target.
-
-### Prevent spatial leakage as well as split leakage
-
-Crop/scale each partial input using only its current visible geometry. Never normalize an early prefix with the complete drawing's later bounding box. The image preprocessor must not use unseen points to choose its center, scale or mask.
-
-Use elapsed drawing-time prefixes as the main experiment because timing is available. A point-count or stroke-count prefix grid can be an optional sensitivity check. Do not claim that timestamps are neural input features in the selected image model.
-
-## 8. Rendering, color, fill and the background question
-
-**Ignoring color meaning is not the same operation as blindly making every non-white pixel black.**
-
-If a player fills the background blue, a “non-white = foreground” rule would label nearly the entire canvas as ink. Grayscale conversion alone can also hide a boundary between colors of similar brightness. This is an explicit preprocessing requirement.
-
-### Canonical visible state comes first
-
-For real gameplay, replay the accepted brush, fill, eraser, undo/redo and clear operations to create the exact visible canvas for the chosen version. Never render every historical stroke as if erased/undone content were still visible.
-
-The current frontend contract is 1024x768 and includes colored brush/eraser strokes, region fill, undo/redo and clear. Its fill implementation composites transparency over white before flood fill. There is no separate semantic label saying “this fill is only the background.”
-
-Therefore do not strip all fill operations, assume the clicked region is background, or restore erased shapes for the Guesser. Use only boundaries and content that humans can currently see.
-
-For a deterministic Quick, Draw! replay, take the current timestamp prefix, compute its current point bounds, and fit the longer side into 448 pixels on a 512x512 white working canvas. Draw each stroke separately with round caps/joins, using a 6-pixel line for validation/test and a seeded 3–12-pixel width variation for training. Draw a single-point stroke as a disk of radius half the line width. Render at twice that working resolution and downsample for antialiasing. Then apply the chosen shared shape preprocessor and 224-pixel fit/pad step. Do not connect strokes. A degenerate one-axis span uses the other axis for scaling; an entirely blank prefix is passed through as blank.
-
-This is a documented rendering convention, not a reconstruction of Quick, Draw!'s original screen or brush settings, which the raw record does not specify. Live rendering still uses the actual canonical game operations and their actual tool sizes. Include line-width mismatch in synthetic checks.
-
-### Select one shared preprocessor on validation
-
-Data and Validation & Inference own a short validation pilot between these two **shape-based** candidates:
-
-| Candidate | Concrete procedure | Strength | Failure case to inspect |
-| --- | --- | --- | --- |
-| P1: background-aware ink | Estimate a dominant border color from the current visible image; when it is sufficiently uniform, compute color distance from that background, map visible non-background shapes to dark ink, crop and pad | Similar to line-drawing training images; handles uniform colored backgrounds | Objects at the border, several background regions, fills that merge with the background, dense silhouettes |
-| P2: color-boundary outlines | Compute spatial edges separately in the RGB channels, combine the edges, suppress the canvas-frame border, crop current visible boundaries and render them as dark lines on white | Retains visible boundaries despite background fill or equal-luminance colors | Double outlines on thick brush strokes; texture/noise; very thin or low-contrast shapes |
-
-Implement P1 with a documented border sampling rule, quantization/tolerance, uniformity criterion and blank/dense-mask handling. An initial pilot setting is a 16-pixel border, 16-level/channel color quantization, >=70% dominant border-bin support and color-distance threshold 24/255. These are tunable starting values, not verified settings.
-
-Apply those pixel measurements at a fixed max-side working resolution of 512, preserving aspect ratio. If P1 cannot identify a sufficiently uniform border background, mark the input as preprocessing-uncertain and pass. Do not quietly switch that individual image to an unvalidated P2 path. If a dispatch/fallback combination is later chosen, train and validate that exact combination as a new preprocessing version.
-
-Implement P2 with a fixed max-side working image (for example 512), per-channel gradients/Canny, union of visible edges, then the same crop/pad/resize. Begin with Canny thresholds 50/150 and no more than a one-pixel canvas-frame suppression. Check thin strokes before locking thresholds. All choices must be causal and versioned.
-
-For fair model comparisons, apply the chosen preprocessor to **both** synthetic Quick, Draw! canvases and live canvas snapshots. Do not train on plain strokes and change to edge outlines only in the API.
-
-Choose P1 or P2 before the final complete-only versus partial-training runs. Use a small all-class validation subset and synthetic fill tests to choose. If a candidate fails, correct it and rerun the affected pilot, not the final test. Once chosen, package the exact code and fixture hashes as `preprocess_version`.
-
-### Synthetic fill checks using existing drawings only
-
-Start with training originals for augmentations and validation originals for preprocessing selection. Never transform a test drawing into training data.
-
-Test at least:
-
-- White background with dark strokes.
-- Blue/purple/dark background with contrasting strokes.
-- Yellow/red strokes on a white background.
-- Two different colors with similar grayscale brightness.
-- Fill inside an enclosed contour; preserve its external shape.
-- Fill of a large background region.
-- Erasure of visible content, undo/redo of a fill, and clear-to-blank.
-- Very thick strokes, drawing touching a border, dense fill and low contrast.
-
-For controlled synthetic recoloring/background changes, keep a known shape mask and compare normalized outputs against the white-background reference. This checks preprocessing invariance. Synthetic interior fills, erasures or overlays can change visible evidence: report them as separate stress cases, not automatic label-preserving copies.
-
-Quick, Draw! lacks the game's actual fill/undo/eraser histories. Use deterministic renderer fixtures to test operation semantics and synthetic images to test color handling. This does **not** establish accuracy on real game drawings. If a fill removes the visible boundary by matching adjacent colors, the lost shape cannot be recovered from the screenshot. Passing is an acceptable model outcome.
-
-### Final image and tensor contract
-
-After the selected shape extraction:
-
-1. Detect blank input and return a blank/pass result without neural guessing.
-2. Use the current visible foreground/boundaries to find the bounding box.
-3. Preserve aspect ratio; fit the longer side to 192 pixels and center in a 224x224 white image, leaving 16 pixels of margin on the longer side.
-4. Use anti-aliased rendering/resizing. Do not stretch a 4:3 canvas directly into a square.
-5. Repeat the grayscale shape image into three channels; values initially 0–1.
-6. Normalize using the selected checkpoint's configuration.
-
-For the recommended timm checkpoint, the inspected config is `input_size=[3,224,224]`, `mean=[0.5,0.5,0.5]` and `std=[0.5,0.5,0.5]`. This produces approximately -1 for black and +1 for white. Do not substitute the commonly used ImageNet mean/std without checking this checkpoint.
-
-The checkpoint's generic inference pipeline includes a center crop. Use the explicit sketch fit/pad transform above instead, identically in training and serving; do not let an additional default crop cut off drawing boundaries. For training, add modest line-width variation, translation/scale and rotations up to about +/-10 degrees. Avoid flips for directional classes, random crops that remove the object, and unrelated image mixing that creates ambiguous targets.
+Color is used to separate visible shapes, not as learned category meaning. Background-fill, interior-fill, erasure and restoration checks illustrate preprocessing behavior; synthetic examples do not establish game recognition accuracy. The validation owner can compare the two methods before final experiments.
 
 ## 9. Model choice and training work
 
@@ -602,9 +349,9 @@ Day numbers mean work sessions from the agreed start. Fix the actual submission 
 
 | Day | Data — you | Model | Validation & Inference |
 | --- | --- | --- | --- |
-| 1 | Freeze 345-label registry, source inventory, cleaning/split recipe; full-class throughput probe; begin source scan | Verify CUDA and checkpoint; build 345-head model and loader against smoke records | Build input/output schemas and dummy API; prepare split-audit and render/fill fixtures |
-| 2 | Continue scan; deliver indexed smoke subset across all 345 classes; preprocessing pilot inputs | Overfit/smoke checks; measure training throughput and agree equal A/B budget | Audit labels/splits; compare P1/P2 on validation pilot and synthetic fills; freeze shared preprocessor with Data |
-| 3 | Complete scan, duplicate/refill checks and QA; freeze manifests; hand off packages | Start complete-only baseline A and partial-trained B from same initialization | Build resident model worker, pass policy harness, checkpoint/version handling |
+| 1 | Pin the 345-label registry, source inventory and cleaning/split recipe; full-class throughput probe; begin source scan | Verify CUDA and checkpoint; build 345-head model and loader against smoke records | Build input/output schemas and dummy API; prepare split-audit and render/fill fixtures |
+| 2 | Continue scan; deliver indexed smoke subset across all 345 classes; preprocessing pilot inputs | Overfit/smoke checks; measure training throughput and agree equal A/B budget | Audit labels/splits; compare foreground/edges on validation pilot and synthetic fills; select the shared preprocessor with Data |
+| 3 | Complete scan, duplicate/refill checks and QA; save split manifests/summary; hand off packages | Start complete-only baseline A and partial-trained B from same initialization | Build resident model worker, pass policy harness, checkpoint/version handling |
 | 4 | Resolve preparation defects without touching test-based decisions; finalize data receipt | Continue runs; choose checkpoints using validation only | Generate stage-wise validation metrics; integrate public hint filtering; first three-team load run |
 | 5 | Help inspect training/validation failures and package reproducible data recipe | Finish/freeze candidate; deliver complete model package | Calibrate/select passing policy on validation; rerun fill/renderer and end-to-end checks |
 | 6 | Verify artifact hashes and data reproducibility | Support inference parity; no test-driven retraining | Run final held-out evaluation for frozen A/B, synthetic stress report and timed three-team demo |
@@ -612,288 +359,31 @@ Day numbers mean work sessions from the agreed start. Fix the actual submission 
 
 If source scanning takes longer, Model and Validation & Inference continue with the all-class smoke package and dummy/service fixtures. All-345 coverage, frozen split integrity and honest reporting remain required. Reduce equal training steps or optional export work before removing categories or using test data for tuning.
 
-## 13. Release package and completion checks
+## 13. Data handoff and completion checks
 
-The model owner hands the inference owner:
+Optional contact sheets show training originals without an approval requirement. `04-export.py` audits data once before writing separate trainer (train/validation) and held-out-test ZIP64 packages with checksums. It preserves installable data source and uv setup while excluding test records/manifests and test-derived QA from the trainer archive.
 
-~~~text
-guesser-model/
-  weights.safetensors
-  model-config.json
-  labels.json
-  preprocess-config.json
-  policy-config.json
-  training-config.json
-  dataset-receipt.json
-  requirements.lock.txt
-  validation-report.json
-  model-card.md
-~~~
+Editing documentation does not invalidate data. Changed prepared records require preparation again. Existing valid prepared records can receive a new summary without a download. Historical datasets and ZIPs are not rebuilt automatically.
 
-These are intended training/inference deliverables for the group, distinct from the two planning documents delivered in this chat.
+Keep final test custody with the validation owner. Model handoff additionally needs weights, class mapping, chosen preprocessing/settings, training recipe and checkpoint selection record. A model-quality report remains separate from data-format checks.
 
-Completion checklist:
+## 14. Evidence, decisions and remaining work
 
-- [ ] Registry has all 345 source categories, unique IDs and a recorded checksum.
-- [ ] Full-file sampling receipts and actual sample counts are recorded.
-- [ ] Cleaning and exact-duplicate rules are applied and counted.
-- [ ] Every class has 4,000/500/500 original drawings, or preparation visibly fails for refill.
-- [ ] No original/trajectory group crosses train/validation/test.
-- [ ] Prefixes use only available points; crop/scale never use future bounds.
-- [ ] One preprocessor is frozen for both training and serving; background-fill fixtures are checked.
-- [ ] Input tensor and 345-output registry agree on all three machines.
-- [ ] A/B runs have a comparable update budget and validation-only checkpoint selection.
-- [ ] Final-test report covers all 345 classes and keeps views grouped statistically.
-- [ ] Passing reports both accuracy and coverage.
-- [ ] Scheduled decisions use permitted frozen input and cannot score after a deadline/cancellation.
-- [ ] One/two/three-team latency and failure tests are recorded.
-- [ ] Quick, Draw! attribution and actual experiment limitations are included.
-- [ ] Model/version hashes, recipes and final demo instructions are packaged.
+The data tools are implemented, and earlier reports record limited synthetic/real-prefix validation. The slim refactor uses only five small offline checks plus static relocation checks. These do not prove full-source throughput, peak memory, dataset-wide quality, model accuracy or real-game latency.
 
-## 14. Evidence, decisions and remaining empirical work
+The evaluation environment/notebook scaffold was moved from `research/guesser-evaluation/` into the agreed model layout. Its notebook has not been run as part of this move; no new model dependencies or weights were installed.
 
-### Verified during this planning session
+Production acquisition/counts/quality and the model/evaluation experiments remain their owners' work. Preserve the controlled complete-only versus partial-training comparison and untouched held-out test.
 
-- Read the current game design, glossary, frontend drawing contract and fill behavior.
-- Verified the raw source shape using small cat/bicycle/alarm-clock ranges.
-- Verified that the bitmap cat file header is uint8 [123202, 784].
-- Queried the raw source object inventory and total byte size.
-- Read the recommended model card and inspected its actual preprocessing config.
-- Read official PyTorch/timm setup guidance.
-- Completed the decision interview reflected in Section 1.
-- Checked syntax of the included Python snippets and exercised the reference cleaner, seeded sampler/checksum logic, deterministic 4,000/500/500 split and timestamp cuts with local fixtures. The full-source preparation and PyTorch training snippets were not executed end to end.
-- Browser-checked the companion visualization at 1440-pixel desktop and 390-pixel narrow widths, in light and dark desktop appearances; verified replay controls, same-color blank handling and diagram text fit. The review page uses the game's Lemon Crayon design source.
+Primary sources: [Quick, Draw! formats and license](https://github.com/googlecreativelab/quickdraw-dataset), [ViT-Tiny checkpoint](https://huggingface.co/timm/vit_tiny_patch16_224.augreg_in21k_ft_in1k), [timm classifier adaptation](https://huggingface.co/docs/timm/quickstart).
 
-### To be implemented/measured by the group
+## 15. Read the numbered implementation
 
-Full data preparation, the P1/P2 preprocessing pilot, actual model training, A/B comparison, calibration, final test and three-team inference benchmarking. In particular, background-aware processing is a required experiment, not an already proven fix. No accuracy percentage or completed training claim is made here.
+1. `01-download.py`: source inventory, streaming, cleaning, sampling and simple resume.
+2. `02-prepare.py`: retained-candidate conflicts, deduplication, original splits and summary.
+3. `03-preview.py`: optional training contact sheets and a small synthetic example.
+4. `04-export.py`: one final data audit and separate trainer/test packages.
+5. `05-loader.py`: read one original and coordinate its requested view.
+6. `06-images.py`: time cut, visible-stroke rendering and foreground/edges preprocessing.
 
-### Primary references
-
-- [Quick, Draw! data and formats](https://github.com/googlecreativelab/quickdraw-dataset)
-- [Official 345 category registry](https://raw.githubusercontent.com/googlecreativelab/quickdraw-dataset/master/categories.txt)
-- [Public raw-object inventory](https://storage.googleapis.com/storage/v1/b/quickdraw_dataset/o?prefix=full%2Fraw%2F&maxResults=1000)
-- [Quick, Draw! CC BY 4.0 attribution](https://github.com/googlecreativelab/quickdraw-dataset#license)
-- [ViT-Tiny checkpoint card](https://huggingface.co/timm/vit_tiny_patch16_224.augreg_in21k_ft_in1k)
-- [Checkpoint configuration](https://huggingface.co/timm/vit_tiny_patch16_224.augreg_in21k_ft_in1k/blob/main/config.json)
-- [timm loading and classifier adaptation](https://huggingface.co/docs/timm/quickstart)
-- [Official PyTorch version/install pairs](https://pytorch.org/get-started/previous-versions/)
-- [Sketchformer official implementation](https://github.com/leosampaio/sketchformer)
-
-Use an attribution such as: “Drawings sourced from the Google Quick, Draw! Dataset, Google Creative Lab, CC BY 4.0; sampled, cleaned and rendered into partial views by the project team.” Link the [license](https://creativecommons.org/licenses/by/4.0/) and record the transformations in the dataset/model card.
-
-Local owning design sources inspected: `E:\BSCS 4th Year\CSC173\group-project\SYSTEM-DESIGN.md`, `CONTEXT.md`, `apps\web\src\contracts\drawing.ts`, `apps\web\src\features\canvas\DrawingCanvas.tsx` and `fill.worker.ts`. The output artifact uses that project's Lemon Crayon design system. The game repository was read for context; this planning work does not modify it.
-
-## 15. Reference functions for the data owner
-
-These standard-library functions make the sampling, cleaning, splitting and timestamp rules concrete. Copy them into the preparation implementation, then add the orchestration, atomic class receipts, on-disk duplicate index and indexed-record writer described above. They are not a complete multi-class command-line application.
-
-The sampler reads **a whole source object**. Do not call it in an exploratory notebook unless you intend that download. Fetch the category's metadata from the saved source inventory and pass it as `source_meta`.
-
-~~~python
-import base64
-import hashlib
-import heapq
-import json
-import math
-import urllib.parse
-import urllib.request
-from collections import Counter
-
-SEED = 198173
-
-def priority(namespace, drawing_id):
-    text = f"{namespace}|{SEED}|{drawing_id}"
-    return int.from_bytes(hashlib.sha256(text.encode("utf-8")).digest(), "big")
-
-def clean_record(record, expected_word):
-    if not isinstance(record, dict):
-        raise ValueError("not_object")
-    drawing_id = record.get("key_id")
-    if not isinstance(drawing_id, str) or not drawing_id:
-        raise ValueError("invalid_id")
-    if record.get("word") != expected_word:
-        raise ValueError("word_mismatch")
-    drawing = record.get("drawing")
-    if not isinstance(drawing, list) or not drawing:
-        raise ValueError("empty_drawing")
-
-    cleaned = []
-    repairs = Counter()
-    last_time = -1
-    first_xy = None
-    has_extent = False
-    first_time = None
-    for stroke in drawing:
-        if not isinstance(stroke, list) or len(stroke) != 3:
-            raise ValueError("stroke_axes")
-        xs, ys, ts = stroke
-        if not all(isinstance(axis, list) for axis in (xs, ys, ts)):
-            raise ValueError("axis_not_list")
-        if not (len(xs) == len(ys) == len(ts)):
-            raise ValueError("axis_lengths")
-        if not xs:
-            repairs["empty_stroke_removed"] += 1
-            continue
-        out_x, out_y, out_t = [], [], []
-        previous_triple = None
-        for x, y, t in zip(xs, ys, ts):
-            if any(isinstance(v, bool) or not isinstance(v, (int, float))
-                   for v in (x, y)):
-                raise ValueError("coordinate_type")
-            x, y = float(x), float(y)
-            if not (math.isfinite(x) and math.isfinite(y)):
-                raise ValueError("nonfinite_coordinate")
-            if isinstance(t, bool) or not isinstance(t, int) or t < 0:
-                raise ValueError("time_type_or_negative")
-            if t < last_time:
-                raise ValueError("time_decreased")
-            last_time = t
-            if first_time is None:
-                first_time = t
-            if first_xy is None:
-                first_xy = (x, y)
-            has_extent = has_extent or (x, y) != first_xy
-            triple = (x, y, t)
-            if triple == previous_triple:
-                repairs["exact_point_duplicate_removed"] += 1
-                continue
-            out_x.append(x)
-            out_y.append(y)
-            out_t.append(t)
-            previous_triple = triple
-        if out_x:
-            cleaned.append([out_x, out_y, out_t])
-
-    if not cleaned or not has_extent:
-        raise ValueError("no_geometric_extent")
-    if first_time is None or last_time <= first_time:
-        raise ValueError("zero_duration")
-    result = dict(record)
-    result["drawing"] = cleaned
-    return result, repairs
-
-def trajectory_hash(record):
-    # Coordinates have been canonicalized to finite floats; times remain ints.
-    packed = json.dumps(record["drawing"], separators=(",", ":"),
-                        allow_nan=False).encode("utf-8")
-    return hashlib.sha256(packed).hexdigest()
-
-def sample_full_category(word, source_meta, keep=5500):
-    url = ("https://storage.googleapis.com/quickdraw_dataset/full/raw/"
-           + urllib.parse.quote(word, safe="") + ".ndjson")
-    heap = []  # negative priority -> worst retained priority at heap[0]
-    retained_ids = {}
-    stats = Counter()
-    source_md5 = hashlib.md5()
-    source_sha256 = hashlib.sha256()
-    received = 0
-
-    with urllib.request.urlopen(url, timeout=60) as response:
-        expected_generation = str(source_meta.get("generation", ""))
-        actual_generation = response.headers.get("x-goog-generation", "")
-        if expected_generation and actual_generation != expected_generation:
-            raise RuntimeError("Source generation changed; refresh inventory")
-        for line in response:
-            source_md5.update(line)
-            source_sha256.update(line)
-            received += len(line)
-            stats["source_lines"] += 1
-            try:
-                record, repairs = clean_record(json.loads(line), word)
-            except (ValueError, TypeError, OverflowError, RecursionError) as exc:
-                stats["rejected:" + str(exc)] += 1
-                continue
-            stats["structurally_valid"] += 1
-            stats.update(repairs)
-            drawing_id = record["key_id"]
-            score = priority("select-v1", drawing_id)
-            if drawing_id in retained_ids:
-                geom = trajectory_hash(record)
-                if retained_ids[drawing_id] != geom:
-                    raise RuntimeError("Conflicting retained drawing ID")
-                stats["retained_id_duplicate"] += 1
-                continue
-            # Hash/sample membership is independent of file order.
-            if len(heap) == keep and score >= -heap[0][0]:
-                continue
-            geom = trajectory_hash(record)
-            encoded = json.dumps(record, separators=(",", ":"),
-                                 allow_nan=False)
-            item = (-score, drawing_id, geom, encoded)
-            if len(heap) < keep:
-                heapq.heappush(heap, item)
-            else:
-                removed = heapq.heapreplace(heap, item)
-                retained_ids.pop(removed[1], None)
-            retained_ids[drawing_id] = geom
-
-    if received != int(source_meta["size"]):
-        raise RuntimeError("Source size mismatch or interrupted download")
-    actual_md5 = base64.b64encode(source_md5.digest()).decode("ascii")
-    if source_meta.get("md5Hash") and actual_md5 != source_meta["md5Hash"]:
-        raise RuntimeError("Source MD5 mismatch")
-    if len(heap) < keep:
-        raise RuntimeError("Too few eligible candidates; inspect category")
-
-    ordered = sorted(heap, key=lambda item: (-item[0], item[1]))
-    candidates = [
-        {"priority_hex": format(-neg_score, "064x"), "drawing_id": drawing_id,
-         "trajectory_hash": geom, "record": json.loads(encoded)}
-        for neg_score, drawing_id, geom, encoded in ordered
-    ]
-    receipt = {
-        "word": word, "source_bytes": received,
-        "source_generation": source_meta.get("generation"),
-        "source_sha256": source_sha256.hexdigest(),
-        "source_md5": actual_md5, "seed": SEED,
-        "retained_candidates": len(candidates), "counts": dict(stats),
-    }
-    return candidates, receipt
-
-def split_one_class(records):
-    # Call ONLY after global ID/trajectory conflict checks and reserve refill.
-    if len(records) != 5000:
-        raise ValueError("Expected exactly 5000 deduplicated originals")
-    ids = [r["key_id"] for r in records]
-    hashes = [trajectory_hash(r) for r in records]
-    if len(set(ids)) != 5000 or len(set(hashes)) != 5000:
-        raise ValueError("Duplicate originals remain in this class")
-    ordered = sorted(records,
-                     key=lambda r: (priority("split-v1", r["key_id"]),
-                                    r["key_id"]))
-    return {"train": ordered[:4000],
-            "validation": ordered[4000:4500],
-            "test": ordered[4500:]}
-
-def time_prefix(record, fraction):
-    if not 0 <= fraction <= 1:
-        raise ValueError("fraction outside [0,1]")
-    strokes = record["drawing"]
-    t0 = strokes[0][2][0]
-    t1 = strokes[-1][2][-1]
-    cutoff = t0 + fraction * (t1 - t0)
-    output = []
-    for xs, ys, ts in strokes:
-        n = 0
-        while n < len(ts) and ts[n] <= cutoff:
-            n += 1
-        if n:
-            output.append([xs[:n], ys[:n], ts[:n]])
-    return output
-~~~
-
-The cross-class duplicate index must be persistent, such as SQLite, rather than a giant list of all decoded drawings:
-
-1. Write each class's 5,500 candidates to staging in priority order.
-2. Scan staged hashes into a table keyed by trajectory hash and record the class ID; mark a conflict when that exact hash occurs under different labels. Maintain a second ID index for inconsistent/cross-class IDs.
-3. For each class, walk its ranked candidates, reject globally conflicting IDs/hashes, and keep the first 5,000 unique eligible trajectories.
-4. Call `split_one_class`; write the records and manifest rows, tracking actual byte offsets in binary write mode.
-5. Check all manifest IDs and hashes for disjointness, and write the immutable receipt.
-6. Only then expose the package for complete experiments.
-
-A minimal record-offset writer uses `offset = output.tell()` before `output.write(json_bytes + b"\n")` and records the exact byte length including the newline. Always serialize with UTF-8 explicitly. Validate random-access reads against a sample of manifest rows.
-
-When implementing the sampler's orchestrator, retry a failed class without keeping a misleading success receipt. Do not rerun completed classes with changed source inventory or seed and combine their records under the same dataset version.
-
-
+`settings.py` is the source of editable defaults. The [README](../../models/guesser/data/README.md) maps the files and the [runbook](../../models/guesser/data/RUNBOOK.md) gives exact commands. Reference implementations live in those source files rather than duplicate code pasted into this document.

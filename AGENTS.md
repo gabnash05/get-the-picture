@@ -5,7 +5,7 @@
 More Than Meets the AI is a CSC173 multiplayer drawing game where humans race a transformer AI to recognize sketches. Research focuses on recognition through shared semantic and cultural visual references.
 
 - `apps/web/`: implemented Next.js/TypeScript canvas frontend; room entry, chat, scores, and AI panels are local fixtures.
-- `research/guesser-evaluation/`: uv-managed Python/Jupyter environment for Evaluation & Inference; the current scaffold does not include an evaluator, inference service, trained weights, or measured results.
+- `models/guesser/evaluation/`: uv-managed Python/Jupyter evaluation environment; model metrics and serving remain future work.
 - Planned backend: NestJS + Socket.IO, FastAPI inference, PostgreSQL/Prisma. One authoritative game process holds active matches in memory; no Redis.
 
 ## Read first
@@ -21,6 +21,13 @@ More Than Meets the AI is a CSC173 multiplayer drawing game where humans race a 
 - Decide routine implementation details independently. Ask the user about unresolved gameplay or architecture choices before implementing them.
 - Explain key reasoning clearly, update affected docs when behavior changes, and distinguish fixtures, planned features, implemented behavior, and verified results.
 
+## Code style
+
+- Python: follow PEP 8, use Ruff for style and Pyright for types, four-space indentation, descriptive snake_case names, explicit imports and one statement per line. Type public interfaces; keep docstrings short.
+- TypeScript/React: follow the existing ESLint rules, use specific types and descriptive names, and keep components/functions focused.
+- PowerShell: use full cmdlet names, named arguments and readable blocks. JSON uses two-space indentation and a final newline.
+- Prefer direct code and existing libraries. Extract helpers for repeated behavior; avoid speculative abstractions, redundant state and defensive checks without a concrete requirement.
+
 ## Development and validation
 
 Use Node.js 24 and npm. Run frontend commands from `apps/web/`:
@@ -32,4 +39,8 @@ npm run dev
 
 For frontend code changes, run the relevant checks: `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build`. Use `npm run test:e2e` for affected browser flows; it requires a production build and installed Google Chrome. Report what ran and any validation limits.
 
-For the cross-platform research workspace, use `uv sync --project research/guesser-evaluation --locked` and run notebooks from that uv environment. Keep Python requirements compatible with Windows and Linux; do not commit datasets, checkpoints, or machine-specific CUDA paths. See `research/guesser-evaluation/README.md`.
+## Guesser deep learning libraries
+
+For Guesser model work, follow [models/guesser/AGENTS.md](models/guesser/AGENTS.md) and [the library map](models/guesser/LIBRARIES.md). Reuse existing library implementations for standard deep learning operations; custom code should connect them to project-specific data and game rules. Keep the CPU-only data package separate from the model/GPU environment, and manage both with uv.
+
+Use `uv sync --project models/guesser/evaluation --locked` for the separate Python 3.12 notebook environment. Keep its lock and notebook/source workflow; do not install model extras or execute notebooks during directory-only changes.

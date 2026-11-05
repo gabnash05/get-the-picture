@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "guesser-data"
+version = "0.1.0"
+description = "Simple Quick, Draw! sampling, original-level splits and timed model images"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "numpy",
+    "pillow",
+    "pyarrow",
+    "opencv-python-headless",
+    "psutil",
+]
+
+[project.scripts]
+guesser-data = "guesser_data.cli:main"
+
+[tool.setuptools]
+packages = ["guesser_data"]
+package-dir = { guesser_data = "src" }
+
+[tool.setuptools.package-data]
+guesser_data = ["resources/*.txt", "resources/*.json"]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.414",
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.13"
+typeCheckingMode = "basic"
+venvPath = "."
+venv = ".venv"

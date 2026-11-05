@@ -1,0 +1,262 @@
+{
+  "acceptance_checks": {
+    "exported_trainer_contains_no_test_records_or_test_manifests": true,
+    "exported_trainer_installed_version": "0.1.0",
+    "exported_trainer_load_and_p1_p2_views": "passed",
+    "exported_trainer_uv_sync_frozen_offline_no_dev": "passed",
+    "final_frozen_exports_reopened": "passed",
+    "frontend_tests_run": false,
+    "manual_smoke_review": "all ten class sheets approved by user",
+    "model_training_run": false,
+    "pytest_command": ".venv/Scripts/python.exe -m pytest tests -q -p no:cacheprovider",
+    "pytest_failed": 0,
+    "pytest_passed": 37,
+    "pytest_seconds": 21.57,
+    "test_qa_in_trainer_export": false,
+    "uv_sync_frozen_offline": "passed"
+  },
+  "download_budget": {
+    "actual_bytes": 6779537,
+    "limit_bytes": 104857600,
+    "requests": 12,
+    "reservations": 1566,
+    "spent_bytes": 8634368
+  },
+  "elapsed_seconds": 925.329,
+  "environment": {
+    "cache_and_outputs_drive": "E:",
+    "dependencies": {
+      "google-crc32c": "1.9.0",
+      "numpy": "2.5.4",
+      "opencv-python-headless": "5.0.0.93",
+      "pillow": "13.0.0",
+      "psutil": "7.2.2",
+      "pyarrow": "26.0.1"
+    },
+    "python": "3.13.5",
+    "uv": "0.12.18",
+    "uv_lock_sha256": "bd5cf40301311ea670f5c9a9d9e57d063d230c96ed79116a81cdbd888c4c0a64"
+  },
+  "finalization_seconds": 31.61,
+  "layout_relocation": {
+    "date": "2026-11-05",
+    "from": "guesser-data/",
+    "frozen_workspaces": "Refreshed through freeze after confirming only README/RUNBOOK fingerprints changed.",
+    "note": "File organization only; original 37-check validation result is preserved. No tests or dataset downloads were rerun for this move.",
+    "original_export_archive_sha256": "unchanged for all six archives",
+    "to": "models/guesser/data/",
+    "uv_environment": "Recreated with uv sync --frozen --offline at the new location."
+  },
+  "limits": {
+    "live_data_mib": 100,
+    "offline": false
+  },
+  "production_scan_executed": false,
+  "readability_review": {
+    "current_uv_lock_sha256": "730b6d72dca0be29905b389ac6866cd6390a36dfc70a1ddba851ec34c98776bc",
+    "data_regression_tests": {
+      "elapsed_seconds": 58.53,
+      "failed": 0,
+      "passed": 37
+    },
+    "dataset_downloads_run": false,
+    "date": "2026-11-05",
+    "exports": "rebuilt with current source; previous archives preserved under .local/readability-before/exports",
+    "frontend_tests_run": false,
+    "image_and_view_baseline": "exact match for three existing drawings, seeded train/evaluation views and all 17 stress cases",
+    "model_training_run": false,
+    "prepared_records_manifests_membership_and_approvals": "unchanged; all three local frozen workspaces reaudited",
+    "rebuilt_trainer_loading": "160 training / 20 validation; P1 and P2 view generation passed; no test records/manifests in trainer archive",
+    "rebuilt_trainer_offline_uv_install": "passed with --frozen --offline --no-dev",
+    "report": "reports/readability-review.md",
+    "ruff": "0.17.3",
+    "ruff_format_check": "passed",
+    "ruff_lint": "passed",
+    "style": "Ruff formatting/import lint; descriptive names, focused functions and public interface hints",
+    "uv_lock_check_offline": "passed"
+  },
+  "real_smoke": {
+    "data_root": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\real-source",
+    "exports": {
+      "held-out-test": {
+        "originals_reopened": 20,
+        "path": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\real-source\\smoke\\exports\\held-out-test-validation_only.zip",
+        "sha256": "a5579922a24f1e3b477258143506114ec945aab1d16c602140687ef8f27d0fce"
+      },
+      "trainer": {
+        "originals_reopened": 180,
+        "path": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\real-source\\smoke\\exports\\trainer-validation_only.zip",
+        "sha256": "df94c8e9ee90ee5b6a3d757891c3c5a91e54d806ef6255f7b3fd15aa554fa550"
+      }
+    },
+    "originals": {
+      "test": 20,
+      "train": 160,
+      "validation": 20
+    },
+    "review_approval": "User explicitly approved all ten class sheets in Codex; no exclusions.",
+    "review_csv": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\real-source\\smoke\\qa\\review.csv",
+    "review_index": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\real-source\\smoke\\qa\\index.html",
+    "status": "accepted_frozen_exported"
+  },
+  "registry_sha256": "6326fde883ce71b53153bdf50b3671dc6652c8c14e67c7d07d23c1af6d103f4b",
+  "remaining": [
+    "Production all-class source scan and complete-object checksum verification",
+    "Measured production counts, throughput and dataset-wide quality review",
+    "Final P1/P2 selection using the model-validation pilot",
+    "Model training, accuracy and real-game recognition validation"
+  ],
+  "review": {
+    "approval": "Explicit user approval: Approve all ten class sheets",
+    "csv_sha256": "d815df5173322a5d114ece24004f2be9fd15fba4a497b8fca0c00556c64fc05f",
+    "decisions_sha256": "1f0eb0229173e442cd4e9dce13c6a390f949fe6cd2779d6615779cfcc758004f",
+    "excluded_ids": []
+  },
+  "rss_mib_at_finish": 110.12,
+  "stages": {
+    "all_labels": {
+      "audit": "passed",
+      "classes": 345,
+      "deterministic_selection": true,
+      "exports": {
+        "held-out-test": {
+          "originals_reopened": 690,
+          "path": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\synthetic-all\\smoke\\exports\\held-out-test-validation_only.zip",
+          "sha256": "1020b59126354137dd235fbea246b41abc1419d0c31f5b1f10bce51302cb362f"
+        },
+        "trainer": {
+          "originals_reopened": 6210,
+          "path": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\synthetic-all\\smoke\\exports\\trainer-validation_only.zip",
+          "sha256": "80de8b11f91823ba3121aeb140a8eaf7ffcf763e6d4452bc7e30130bd9736a68"
+        }
+      },
+      "final_code_reaudit": "passed",
+      "originals": {
+        "test": 690,
+        "train": 5520,
+        "validation": 690
+      },
+      "source_kind": "synthetic_validation",
+      "trainable": false
+    },
+    "preprocessing": {
+      "candidate_hashes": {
+        "p1": "fdf6c8f1c3dd25cf325c2001a37133f83d0d1abbb96730ad8bdfdf002650523b",
+        "p2": "d9ff315aec21bd19b491e4a29d48d4972af8303d8243506680d2dd95c74237e5"
+      },
+      "contact_sheets": {
+        "p1": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\stress\\p1-processed.png",
+        "p2": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\stress\\p2-processed.png"
+      },
+      "states": 17,
+      "status": "passed"
+    },
+    "production_count": {
+      "audit": "passed",
+      "classes": 1,
+      "deterministic_selection": true,
+      "exports": {
+        "held-out-test": {
+          "originals_reopened": 500,
+          "path": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\production-count\\production_fixture\\exports\\held-out-test-validation_only.zip",
+          "sha256": "fa0f1420169dfbc4f761520982ca4e9c840ba388db3cb2ccd93f473058dd23ed"
+        },
+        "trainer": {
+          "originals_reopened": 4500,
+          "path": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\production-count\\production_fixture\\exports\\trainer-validation_only.zip",
+          "sha256": "5a60285a1ada90f5237bdb928315277eb9bdf31af0a9cbc726c2c49f3d523ed3"
+        }
+      },
+      "final_code_reaudit": "passed",
+      "originals": {
+        "test": 500,
+        "train": 4000,
+        "validation": 500
+      },
+      "source_kind": "synthetic_validation",
+      "trainable": false
+    },
+    "real_source": {
+      "audit": "passed",
+      "candidate_count": 300,
+      "classes": 10,
+      "complete_source_verified": false,
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "type_and_defaults_update": {
+    "acquisition_lines": {
+      "after": 611,
+      "before": 714
+    },
+    "candidate_hashes": {
+      "p1": "fdf6c8f1c3dd25cf325c2001a37133f83d0d1abbb96730ad8bdfdf002650523b",
+      "p2": "d9ff315aec21bd19b491e4a29d48d4972af8303d8243506680d2dd95c74237e5"
+    },
+    "date": "2026-11-05",
+    "exact_p1_p2_and_view_baseline": "matched",
+    "exports": {
+      "production-count": {
+        "held-out-test": {
+          "originals_reopened": 500,
+          "path": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\production-count\\production_fixture\\exports\\held-out-test-validation_only.zip",
+          "sha256": "fa0f1420169dfbc4f761520982ca4e9c840ba388db3cb2ccd93f473058dd23ed"
+        },
+        "trainer": {
+          "originals_reopened": 4500,
+          "path": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\production-count\\production_fixture\\exports\\trainer-validation_only.zip",
+          "sha256": "5a60285a1ada90f5237bdb928315277eb9bdf31af0a9cbc726c2c49f3d523ed3"
+        }
+      },
+      "real-source": {
+        "held-out-test": {
+          "originals_reopened": 20,
+          "path": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\real-source\\smoke\\exports\\held-out-test-validation_only.zip",
+          "sha256": "a5579922a24f1e3b477258143506114ec945aab1d16c602140687ef8f27d0fce"
+        },
+        "trainer": {
+          "originals_reopened": 180,
+          "path": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\real-source\\smoke\\exports\\trainer-validation_only.zip",
+          "sha256": "df94c8e9ee90ee5b6a3d757891c3c5a91e54d806ef6255f7b3fd15aa554fa550"
+        }
+      },
+      "synthetic-all": {
+        "held-out-test": {
+          "originals_reopened": 690,
+          "path": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\synthetic-all\\smoke\\exports\\held-out-test-validation_only.zip",
+          "sha256": "1020b59126354137dd235fbea246b41abc1419d0c31f5b1f10bce51302cb362f"
+        },
+        "trainer": {
+          "originals_reopened": 6210,
+          "path": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\data\\validation\\synthetic-all\\smoke\\exports\\trainer-validation_only.zip",
+          "sha256": "80de8b11f91823ba3121aeb140a8eaf7ffcf763e6d4452bc7e30130bd9736a68"
+        }
+      }
+    },
+    "global_download_limit": null,
+    "historical_download_ledger_changed": false,
+    "new_dataset_downloads": false,
+    "originals_manifests_membership_reviews": "unchanged",
+    "p2_available": true,
+    "preprocessing_default": "p1",
+    "preprocessing_selection_status": "provisional_user_choice",
+    "prior_archives": "E:\\BSCS 4th Year\\CSC173\\group-project\\models\\guesser\\data\\.local\\type-fix-before\\exports",
+    "pyright": {
+      "errors": 0,
+      "mode": "basic",
+      "scope": "src/guesser_data",
+      "warnings": 0
+    },
+    "pytest": {
+      "failed": 0,
+      "passed": 37,
+      "scope": "data-only local and mocked streams",
+      "seconds": 28.99
+    },
+    "ruff": "passed",
+    "scope": "Remove the download budget, fix five type diagnostics, and document P1 as the provisional default. Acquisition remains one file.",
+    "uv_lock_offline_check": "passed",
+    "uv_lock_sha256": "4bfb488ec0186bded4759c7ab01ef305ee8dcc4938d8f5814b8ff7b8f000ac19"
+  }
+}
