@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#FFE83D">
+  <meta name="description" content="Lemon Crayon: a static design system of saturated color, rounded typography, and hand-drawn shapes.">
+  <title>More Than Meets the AI — Logo &amp; Lemon Crayon foundations</title>
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+/* OD-LAYOUT-PRIMITIVES v1 — structure only: display, flex/grid, overflow, wrapping, ratio.
+   Put this @layer first; product CSS outside the layer always wins. */
+@layer od-layout {
+  :where(.od-stack,.od-row,.od-row-top,.od-cluster,.od-grid,.od-field,.od-stat,.od-cell,.od-tile) > :where(*) { min-width: 0; }
+  .od-stack { display: flex; flex-direction: column; gap: var(--od-gap, 8px); }
+  .od-row { display: flex; align-items: center; gap: var(--od-gap, 8px); }
+  .od-row-top { display: flex; align-items: flex-start; gap: var(--od-gap, 8px); }
+  .od-cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--od-gap, 8px); }
+  .od-fill { flex: 1 1 0; min-width: 0; }
+  .od-fixed { flex: none; }
+  .od-grid { display: grid; gap: var(--od-gap, 12px); grid-template-columns: repeat(var(--od-cols, 3), minmax(0, 1fr)); }
+  .od-stat, .od-field, .od-cell { display: grid; gap: var(--od-gap, 2px); }
+  :where(.od-stat,.od-field,.od-cell) > :where(*) { display: block; }
+  .od-tile { display: grid; grid-template-rows: auto 1fr; }
+  :where(.od-tile) > :where(*) { display: block; }
+  .od-media { display: block; width: 100%; height: auto; aspect-ratio: var(--od-ratio, auto); }
+  .od-media-cover { object-fit: cover; }
+  .od-truncate { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .od-clamp-2, .od-clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .od-clamp-2 { -webkit-line-clamp: 2; }
+  .od-clamp-3 { -webkit-line-clamp: 3; }
+  .od-lines-2 { min-height: calc(2 * 1.4em); }
+  .od-nowrap { white-space: nowrap; }
+  .od-keep { word-break: keep-all; overflow-wrap: anywhere; }
+  .od-screen { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; }
+  .od-scroll { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+  .od-rail { display: flex; gap: var(--od-gap, 8px); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; padding-inline: var(--od-rail-pad, 16px); scroll-padding-inline: var(--od-rail-pad, 16px); }
+  .od-rail::-webkit-scrollbar { display: none; }
+  :where(.od-rail) > :where(*) { flex: none; scroll-snap-align: start; }
+  :where(.od-rail) > :where(:last-child) { margin-inline-end: var(--od-rail-pad, 16px); }
+  .od-spacer { flex: none; visibility: hidden; pointer-events: none; }
+  .od-touch { min-width: 44px; min-height: 44px; }
+}
+/* /OD-LAYOUT-PRIMITIVES v1 */
+    :root {
+      --page-max: 1440px;
+      --sidebar-width: 208px;
+      --rule: var(--stroke-fine) solid var(--color-ink);
+      --od-gap: var(--space-8);
+    }
+    * { box-sizing: border-box; }
+    html { color-scheme: light; }
+    body { margin: 0; background: var(--color-paper); color: var(--color-text); font: var(--weight-body) var(--text-16)/var(--leading-body) var(--font-body); }
+    h1,h2,h3,p,figure { margin: 0; }
+    h1,h2,h3 { font-family: var(--font-display); font-weight: var(--weight-display); line-height: var(--leading-display); }
+    h1 { font-size: clamp(var(--text-48), 4.6vw, var(--text-64)); }
+    h2 { font-size: var(--text-32); }
+    h3 { font-size: var(--text-20); }
+    p { max-width: var(--measure-body); }
+    a { color: inherit; text-underline-offset: var(--space-4); cursor: pointer; }
+    code { font-family: var(--font-body); font-weight: var(--weight-body-bold); font-size: var(--text-16); overflow-wrap: anywhere; }
+    button,a { -webkit-tap-highlight-color: var(--color-yellow); }
+    a:focus-visible { outline: var(--stroke-bold) solid var(--color-blue); outline-offset: var(--space-4); border-radius: var(--radius-small); }
+    section:focus-visible { outline: var(--stroke-bold) solid var(--color-blue); outline-offset: var(--space-8); }
+    svg { display: block; max-width: 100%; }
+    .skip-link { position: fixed; top: var(--space-8); left: var(--space-8); z-index: 10; padding: var(--space-12) var(--space-16); background: var(--color-paper); border: var(--rule); transform: translateY(-200%); }
+    .skip-link:focus { transform: translateY(0); }
+    .site-header { max-width: var(--page-max); margin-inline: auto; padding: var(--space-24) var(--space-48); border-bottom: var(--rule); justify-content: space-between; flex-wrap: wrap; gap: var(--space-16); }
+    .wordmark { display: flex; align-items: center; gap: var(--space-12); font-family: var(--font-display); font-size: var(--text-24); font-weight: var(--weight-display); text-decoration: none; }
+    .brand-symbol { width: var(--space-48); height: var(--space-48); flex: none; }
+    .header-note { font-weight: var(--weight-body-bold); }
+    .version { display: inline-flex; padding: var(--space-4) var(--space-12); border: var(--rule); border-radius: var(--radius-pill); background: var(--color-yellow); font-weight: var(--weight-body-heavy); }
+    .header-meta { gap: var(--space-16); }
+    .page-layout { display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); gap: var(--space-48); max-width: var(--page-max); margin-inline: auto; padding: var(--space-32) var(--space-48) var(--space-48); }
+    .sidebar { min-width: 0; }
+    .sidebar-inner { position: sticky; top: var(--space-32); display: grid; gap: var(--space-32); }
+    .eyebrow { font-weight: var(--weight-body-heavy); font-size: var(--text-16); }
+    .nav-title { margin-bottom: var(--space-16); }
+    .section-nav { display: grid; gap: var(--space-8); }
+    .section-nav a { display: flex; gap: var(--space-12); align-items: center; min-height: var(--space-48); padding: var(--space-8) var(--space-12); border-radius: var(--radius-small); text-decoration: none; font-weight: var(--weight-body-bold); }
+    .section-nav .nav-overview { background: var(--color-yellow); border: var(--rule); }
+    .nav-number { font-weight: var(--weight-body); }
+    .source-links { border-top: var(--rule); padding-top: var(--space-24); display: grid; gap: var(--space-8); }
+    .source-links a { display: block; min-height: var(--space-48); padding: var(--space-12) 0; font-weight: var(--weight-body-bold); }
+    .sidebar-note { padding-top: var(--space-16); max-width: 20ch; }
+    main { min-width: 0; }
+    .logo-section { display: grid; gap: var(--space-24); margin-bottom: var(--space-64); scroll-margin-top: var(--space-24); }
+    .logo-heading { display: grid; gap: var(--space-12); }
+    .logo-heading h2 { font-size: clamp(var(--text-32), 4vw, var(--text-48)); text-wrap: balance; }
+    .logo-figure { display: grid; gap: var(--space-16); margin: 0; }
+    .logo-surface { display: grid; place-items: center; padding: clamp(var(--space-16), 3vw, var(--space-32)); background: var(--color-paper); border: var(--rule); border-radius: var(--radius-large); }
+    .logo-image { display: block; width: 100%; height: auto; max-width: 400px; }
+    .logo-caption { display: grid; gap: var(--space-8); }
+    .logo-actions { display: flex; flex-wrap: wrap; gap: var(--space-16); align-items: center; }
+    .logo-actions a { display: inline-flex; align-items: center; justify-content: center; min-height: var(--space-48); padding: var(--space-12) var(--space-24); border: var(--rule); border-radius: var(--radius-pill); font-weight: var(--weight-body-heavy); text-decoration: none; }
+    .logo-actions .logo-download { background: var(--color-yellow); }
+    .logo-actions .logo-brief { background: var(--color-paper); }
+    .logo-swatches { display: flex; flex-wrap: wrap; gap: var(--space-16); }
+    .logo-color { display: flex; align-items: center; gap: var(--space-8); }
+    .logo-color-dot { display: block; flex: none; width: var(--space-16); height: var(--space-16); border: var(--rule); border-radius: var(--radius-pill); background: var(--logo-swatch); }
+    @media (hover: hover) { .logo-actions a:hover { text-decoration: underline; text-decoration-thickness: var(--stroke-fine); } }
+    .hero { background: var(--color-yellow); border: var(--rule); border-radius: var(--radius-large); padding: var(--space-32); display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); align-items: center; gap: var(--space-24); }
+    .hero-copy { display: grid; gap: var(--space-24); }
+    .hero-copy p { max-width: 34ch; }
+    .hero h1 { max-width: 10ch; text-wrap: balance; }
+    .hero-art { min-width: 0; display: grid; justify-items: center; gap: var(--space-8); }
+    .crayon-art { width: 100%; max-width: 320px; }
+    .crayon-body { fill: var(--crayon); stroke: var(--color-ink); stroke-width: var(--stroke-bold); stroke-linecap: var(--stroke-cap); stroke-linejoin: var(--stroke-join); }
+    .crayon-detail { fill: none; stroke: var(--color-ink); stroke-width: var(--stroke-fine); stroke-linecap: var(--stroke-cap); }
+    .crayon-shine { fill: none; stroke: var(--color-paper); stroke-width: var(--stroke-bold); stroke-linecap: var(--stroke-cap); }
+    .hero-caption { font-family: var(--font-display); font-size: var(--text-20); }
+    .hero-tags { grid-column: 1/-1; border-top: var(--rule); padding-top: var(--space-16); gap: var(--space-8); justify-content: space-between; font-weight: var(--weight-body-bold); }
+    .tag { display: inline-flex; align-items: center; gap: var(--space-8); }
+    .tag::before { content: ""; display: block; width: var(--space-8); height: var(--space-8); background: var(--color-ink); border-radius: var(--radius-pill); }
+    .foundation { margin-top: var(--space-64); scroll-margin-top: var(--space-24); }
+    .section-heading { align-items: flex-start; gap: var(--space-16); margin-bottom: var(--space-24); }
+    .section-index { flex: none; display: grid; place-items: center; width: var(--space-48); min-height: var(--space-48); border: var(--rule); border-radius: var(--radius-pill); font-family: var(--font-display); font-size: var(--text-20); }
+    .heading-copy { gap: var(--space-8); }
+    .palette { --od-cols: 4; --od-gap: var(--space-16); }
+    .swatch { min-width: 0; border: var(--rule); border-radius: var(--radius-medium); }
+    .swatch-color { background: var(--swatch); color: var(--swatch-ink); min-height: var(--space-96); padding: var(--space-16); border-radius: calc(var(--radius-medium) - var(--stroke-fine)) calc(var(--radius-medium) - var(--stroke-fine)) 0 0; justify-content: space-between; gap: var(--space-8); }
+    .swatch-color svg { width: var(--space-64); flex-shrink: 1; }
+    .swatch-color path { fill: none; stroke: currentColor; stroke-width: var(--stroke-bold); stroke-linecap: var(--stroke-cap); stroke-linejoin: var(--stroke-join); }
+    .swatch-index { font-family: var(--font-display); font-size: var(--text-20); }
+    .swatch-label { padding: var(--space-16); gap: var(--space-8); }
+    .neutral-strip { margin-top: var(--space-24); display: flex; flex-wrap: wrap; gap: var(--space-24); }
+    .neutral-item { gap: var(--space-12); }
+    .neutral-dot { flex: none; display: block; width: var(--space-32); height: var(--space-32); border: var(--rule); border-radius: var(--radius-pill); background: var(--neutral-color); }
+    .usage-note { margin-top: var(--space-24); padding: var(--space-16) 0; border-top: var(--rule); border-bottom: var(--rule); }
+    .type-grid { --od-cols: 2; --od-gap: var(--space-24); }
+    .type-card { border: var(--rule); border-radius: var(--radius-medium); padding: var(--space-24); display: grid; align-content: start; gap: var(--space-24); }
+    .type-card:first-child { background: var(--color-pink); }
+    .type-card:last-child { background: var(--color-neutral); }
+    .specimen-name { font-size: var(--text-48); font-family: var(--font-display); font-weight: var(--weight-display); line-height: var(--leading-display); overflow-wrap: anywhere; }
+    .nunito-name { font-family: var(--font-body); font-weight: var(--weight-body-heavy); }
+    .display-example { font-family: var(--font-display); font-size: var(--text-32); line-height: var(--leading-display); }
+    .alphabet { overflow-wrap: anywhere; font-size: var(--text-20); }
+    .type-meta { border-top: var(--rule); padding-top: var(--space-16); }
+    .type-scale { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-24); margin-top: var(--space-24); }
+    .type-step { text-align: center; gap: var(--space-8); }
+    .type-step strong { font-family: var(--font-display); font-weight: var(--weight-display); line-height: var(--leading-display); }
+    .space-grid { --od-cols: 9; --od-gap: var(--space-16); padding: var(--space-24); border: var(--rule); border-radius: var(--radius-medium); }
+    .space-sample { justify-items: start; align-content: end; gap: var(--space-8); }
+    .space-track { display: flex; align-items: flex-end; min-height: var(--space-96); }
+    .space-bar { display: block; width: var(--space-24); height: var(--sample-space); background: var(--color-purple); border: var(--rule); border-radius: var(--radius-small); }
+    .space-sample code { font-size: var(--text-16); }
+    .section-footnote { margin-top: var(--space-16); }
+    .radius-grid { --od-cols: 5; --od-gap: var(--space-24); }
+    .radius-sample { gap: var(--space-12); }
+    .radius-demo { display: block; min-height: var(--space-96); width: 100%; background: var(--sample-color); border: var(--rule); border-radius: var(--sample-radius); }
+    .radius-sample h3 { font-size: var(--text-20); }
+    .shape-grid { --od-cols: 3; --od-gap: var(--space-24); }
+    .shape-item { display: grid; gap: var(--space-16); }
+    .shape-canvas { display: flex; align-items: center; justify-content: center; min-height: 160px; padding: var(--space-16); background: var(--color-neutral); border-radius: var(--radius-medium); }
+    .blob { display: block; width: 128px; height: var(--space-96); border-radius: var(--shape-blob); background: var(--color-cyan); border: var(--stroke-bold) solid var(--color-ink); }
+    .line-art { width: 100%; max-width: 240px; }
+    .line-art path { fill: none; stroke: var(--color-ink); stroke-linecap: var(--stroke-cap); stroke-linejoin: var(--stroke-join); }
+    .wave-path { d: var(--shape-wave); stroke-width: var(--stroke-bold); }
+    .outline-path { d: var(--shape-outline); stroke-width: var(--stroke-fine); }
+    .stroke-guide { margin-top: var(--space-24); padding: var(--space-16) 0; gap: var(--space-24); }
+    .stroke-item { gap: var(--space-12); }
+    .stroke-sample { display: block; width: var(--space-48); border-top: var(--sample-stroke) solid var(--color-ink); border-radius: var(--radius-pill); }
+    .mood-panel { background: var(--color-yellow); border: var(--rule); border-radius: var(--radius-large); padding: var(--space-32); display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: var(--space-32); align-items: center; }
+    .mood-quote { font-family: var(--font-display); font-size: clamp(var(--text-32), 3.8vw, var(--text-48)); line-height: var(--leading-display); max-width: 12ch; }
+    .mood-words { gap: var(--space-8); margin-bottom: var(--space-16); }
+    .mood-word { display: inline-flex; padding: var(--space-8) var(--space-16); border: var(--rule); border-radius: var(--radius-pill); background: var(--color-paper); font-weight: var(--weight-body-bold); }
+    .footer { margin-top: var(--space-64); padding-top: var(--space-24); border-top: var(--rule); display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: var(--space-16); }
+    .footer p { max-width: 48ch; }
+    .footer-links { display: flex; flex-wrap: wrap; gap: var(--space-24); }
+    .footer-links a { display: block; min-height: var(--space-48); }
+    @media (hover: hover) {
+      .section-nav a:hover { background: var(--color-yellow); text-decoration: underline; }
+      .source-links a:hover,.footer-links a:hover { text-decoration-thickness: var(--stroke-bold); }
+      .wordmark:hover { text-decoration: underline; }
+    }
+    @media (min-width: 1440px) {
+      .hero { padding: var(--space-48); }
+    }
+    @media (max-width: 1023px) {
+      .site-header { padding-inline: var(--space-32); }
+      .page-layout { grid-template-columns: 160px minmax(0,1fr); gap: var(--space-24); padding-inline: var(--space-32); }
+      .hero { grid-template-columns: minmax(0,1fr); }
+      .hero h1 { max-width: 14ch; }
+      .hero-art { justify-items: start; }
+      .crayon-art { max-width: 240px; }
+      .palette { --od-cols: 2; }
+      .type-grid { --od-cols: 1; }
+      .space-grid { --od-cols: 5; }
+      .radius-grid { --od-cols: 3; }
+      .shape-grid { --od-cols: 1; }
+      .shape-item { grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: center; }
+      .mood-panel { grid-template-columns: minmax(0,1fr); }
+    }
+    @media (max-width: 767px) {
+      .site-header { padding: var(--space-16) var(--space-24); }
+      .header-note { display: none; }
+      .page-layout { grid-template-columns: minmax(0,1fr); padding: var(--space-24); gap: var(--space-24); }
+      .sidebar-inner { position: static; gap: var(--space-16); }
+      .nav-title,.sidebar-note { display: none; }
+      .section-nav { display: flex; flex-wrap: wrap; gap: var(--space-8); }
+      .section-nav a { padding-inline: var(--space-12); }
+      .source-links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-16); padding-top: var(--space-8); }
+      .source-links .eyebrow { width: 100%; }
+      .source-links a { padding-block: var(--space-8); }
+      .hero { padding: var(--space-24); }
+      .hero h1 { max-width: 11ch; }
+      .hero-art { justify-items: center; }
+      .hero-tags { justify-content: flex-start; gap: var(--space-16); }
+      .foundation { margin-top: var(--space-48); }
+      .section-heading { gap: var(--space-12); }
+      .space-grid { --od-cols: 3; padding: var(--space-16); }
+      .radius-grid { --od-cols: 2; }
+      .shape-item { grid-template-columns: minmax(0,1fr); }
+      .mood-panel { padding: var(--space-24); }
+      p { max-width: var(--measure-mobile); }
+    }
+    @media (max-width: 374px) {
+      .site-header,.page-layout { padding-inline: var(--space-16); }
+      .palette { --od-cols: 1; }
+      .radius-grid { --od-cols: 1; }
+      .hero { padding: var(--space-16); }
+      .wordmark { font-size: var(--text-20); }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to foundations</a>
+  <header class="site-header od-row">
+    <a class="wordmark" href="#overview" aria-label="Lemon Crayon overview">
+      <svg class="brand-symbol" viewBox="0 0 48 48" aria-hidden="true"><path fill="var(--color-yellow)" stroke="var(--color-ink)" stroke-width="2" d="M24 3 C37 1 47 15 43 28 C42 41 28 47 15 42 C3 39 0 24 7 13 C10 6 16 3 24 3Z"/><path fill="none" stroke="var(--color-ink)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M13 29 L20 16 L20 32 L29 14 L28 31 L36 22"/></svg>
+      <span>Lemon Crayon</span>
+    </a>
+    <div class="header-meta od-row"><span class="header-note">A little outside the lines.</span><span class="version">v1.0</span></div>
+  </header>
+  <div class="page-layout">
+    <aside class="sidebar" aria-label="Design system navigation">
+      <div class="sidebar-inner">
+        <div>
+          <p class="eyebrow nav-title">THE FOUNDATIONS</p>
+          <nav class="section-nav" aria-label="Sections">
+            <a class="nav-overview" href="#logo">Meet the logo</a>
+            <a href="#overview">Meet the system</a>
+            <a href="#color"><span class="nav-number">01</span><span>Color</span></a>
+            <a href="#type"><span class="nav-number">02</span><span>Typography</span></a>
+            <a href="#spacing"><span class="nav-number">03</span><span>Spacing</span></a>
+            <a href="#radius"><span class="nav-number">04</span><span>Roundness</span></a>
+            <a href="#shapes"><span class="nav-number">05</span><span>Shapes &amp; ink</span></a>
+            <a href="#mood"><span class="nav-number">06</span><span>Mood</span></a>
+          </nav>
+        </div>
+        <div class="source-links">
+          <p class="eyebrow">MAKE IT YOURS</p>
+          <a href="tokens.css" download>CSS tokens ↗</a>
+          <a href="tokens.json" download>JSON tokens ↗</a>
+          <a href="DESIGN.md">Usage guide ↗</a>
+        </div>
+        <p class="sidebar-note">Big color.<br>Soft corners.<br>A human touch.</p>
+      </div>
+    </aside>
+    <main id="main" tabindex="-1">
+      <section class="logo-section" id="logo" aria-labelledby="logo-title" tabindex="-1">
+        <div class="logo-heading">
+          <p class="eyebrow">AN ICON WITH PERSONALITY</p>
+          <h2 id="logo-title">More Than Meets the AI</h2>
+          <p>Four bright colors. One crooked paintbrush. A little outside the lines.</p>
+        </div>
+        <figure class="logo-figure">
+          <div class="logo-surface">
+            <img class="logo-image od-media" src="assets/more-than-meets-the-ai-icon.png" width="1254" height="1254" alt="More Than Meets the AI — crooked yellow paintbrush icon with cyan and green bristles and a pink scribble" fetchpriority="high">
+          </div>
+          <figcaption class="logo-caption">
+            <strong>Hand-drawn, happily imperfect.</strong>
+            <span>A crooked paintbrush, rough crayon edges, and a playful tilt.</span>
+          </figcaption>
+        </figure>
+        <div class="logo-swatches" aria-label="Logo palette targets">
+          <span class="logo-color"><span class="logo-color-dot" style="--logo-swatch:var(--color-yellow)" aria-hidden="true"></span>Yellow</span>
+          <span class="logo-color"><span class="logo-color-dot" style="--logo-swatch:var(--color-green)" aria-hidden="true"></span>Green</span>
+          <span class="logo-color"><span class="logo-color-dot" style="--logo-swatch:var(--color-cyan)" aria-hidden="true"></span>Cyan</span>
+          <span class="logo-color"><span class="logo-color-dot" style="--logo-swatch:var(--color-pink)" aria-hidden="true"></span>Pink</span>
+        </div>
+        <div class="logo-actions">
+          <a class="logo-download" href="assets/more-than-meets-the-ai-icon.png" download="more-than-meets-the-ai-icon.png">Download icon PNG</a>
+          <a class="logo-brief" href="LOGO.md">Logo usage guide</a>
+        </div>
+      </section>
+      <section class="hero" id="overview" aria-labelledby="hero-title" tabindex="-1">
+        <div class="hero-copy">
+          <p class="eyebrow">STATIC DESIGN FOUNDATIONS</p>
+          <h1 id="hero-title">A little messy.<br>A lot of happy.</h1>
+          <p>A box of bright ideas. Warm color, squishy type, and lines with a little personality.</p>
+        </div>
+        <figure class="hero-art">
+          <svg class="crayon-art" viewBox="0 0 320 276" role="img" aria-label="Eight colorful crayons with hand-drawn ink outlines">
+            <g style="--crayon:var(--color-red)"><path class="crayon-body" d="M28 83 L42 38 L56 83 V244 Q42 252 28 244 Z"/><path class="crayon-detail" d="M35 61 Q42 66 49 61 M28 83 H56 M28 181 H56 M28 196 H56"/><path class="crayon-shine" d="M37 100 V163"/></g><g style="--crayon:var(--color-orange)"><path class="crayon-body" d="M61 63 L75 18 L89 63 V244 Q75 252 61 244 Z"/><path class="crayon-detail" d="M68 41 Q75 46 82 41 M61 63 H89 M61 181 H89 M61 196 H89"/><path class="crayon-shine" d="M70 80 V163"/></g><g style="--crayon:var(--color-yellow)"><path class="crayon-body" d="M94 75 L108 30 L122 75 V244 Q108 252 94 244 Z"/><path class="crayon-detail" d="M101 53 Q108 58 115 53 M94 75 H122 M94 181 H122 M94 196 H122"/><path class="crayon-shine" d="M103 92 V163"/></g><g style="--crayon:var(--color-green)"><path class="crayon-body" d="M127 51 L141 6 L155 51 V244 Q141 252 127 244 Z"/><path class="crayon-detail" d="M134 29 Q141 34 148 29 M127 51 H155 M127 181 H155 M127 196 H155"/><path class="crayon-shine" d="M136 68 V163"/></g><g style="--crayon:var(--color-cyan)"><path class="crayon-body" d="M160 72 L174 27 L188 72 V244 Q174 252 160 244 Z"/><path class="crayon-detail" d="M167 50 Q174 55 181 50 M160 72 H188 M160 181 H188 M160 196 H188"/><path class="crayon-shine" d="M169 89 V163"/></g><g style="--crayon:var(--color-blue)"><path class="crayon-body" d="M193 58 L207 13 L221 58 V244 Q207 252 193 244 Z"/><path class="crayon-detail" d="M200 36 Q207 41 214 36 M193 58 H221 M193 181 H221 M193 196 H221"/><path class="crayon-shine" d="M202 75 V163"/></g><g style="--crayon:var(--color-purple)"><path class="crayon-body" d="M226 79 L240 34 L254 79 V244 Q240 252 226 244 Z"/><path class="crayon-detail" d="M233 57 Q240 62 247 57 M226 79 H254 M226 181 H254 M226 196 H254"/><path class="crayon-shine" d="M235 96 V163"/></g><g style="--crayon:var(--color-pink)"><path class="crayon-body" d="M259 67 L273 22 L287 67 V244 Q273 252 259 244 Z"/><path class="crayon-detail" d="M266 45 Q273 50 280 45 M259 67 H287 M259 181 H287 M259 196 H287"/><path class="crayon-shine" d="M268 84 V163"/></g>
+            <path d="M27 261 Q108 253 158 261 T294 259" fill="none" stroke="var(--color-ink)" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+          <figcaption class="hero-caption">Pick a color. Make your mark.</figcaption>
+        </figure>
+        <div class="hero-tags od-cluster"><span class="tag">Crayon-bright</span><span class="tag">Happily imperfect</span><span class="tag">Always rounded</span></div>
+      </section>
+
+      <section id="color" class="foundation" aria-labelledby="color-title" tabindex="-1">
+        <div class="section-heading od-row"><span class="section-index" aria-hidden="true">01</span><div class="heading-copy od-field"><h2 id="color-title">Every color gets to play.</h2><p>Eight saturated crayons. Lemon leads; the rest bring the personality.</p></div></div>
+        <div class="palette od-grid">
+            <article class="swatch od-tile">
+              <div class="swatch-color od-row" style="--swatch:var(--color-red);--swatch-ink:var(--color-ink)">
+                <span class="swatch-index">01</span>
+                <svg viewBox="0 0 80 56" aria-hidden="true"><path d="M10 39 Q29 4 49 13 Q69 25 35 36 Q14 41 25 19 M20 46 Q48 5 68 15 Q80 28 44 45" /></svg>
+              </div>
+              <div class="swatch-label od-field"><h3>Red</h3><code>#FF4343</code></div>
+            </article>
+            <article class="swatch od-tile">
+              <div class="swatch-color od-row" style="--swatch:var(--color-orange);--swatch-ink:var(--color-ink)">
+                <span class="swatch-index">02</span>
+                <svg viewBox="0 0 80 56" aria-hidden="true"><path d="M10 39 Q29 4 49 13 Q69 25 35 36 Q14 41 25 19 M20 46 Q48 5 68 15 Q80 28 44 45" /></svg>
+              </div>
+              <div class="swatch-label od-field"><h3>Orange</h3><code>#FF8A1F</code></div>
+            </article>
+            <article class="swatch od-tile">
+              <div class="swatch-color od-row" style="--swatch:var(--color-yellow);--swatch-ink:var(--color-ink)">
+                <span class="swatch-index">03</span>
+                <svg viewBox="0 0 80 56" aria-hidden="true"><path d="M10 39 Q29 4 49 13 Q69 25 35 36 Q14 41 25 19 M20 46 Q48 5 68 15 Q80 28 44 45" /></svg>
+              </div>
+              <div class="swatch-label od-field"><h3>Yellow</h3><code>#FFE83D</code></div>
+            </article>
+            <article class="swatch od-tile">
+              <div class="swatch-color od-row" style="--swatch:var(--color-green);--swatch-ink:var(--color-ink)">
+                <span class="swatch-index">04</span>
+                <svg viewBox="0 0 80 56" aria-hidden="true"><path d="M10 39 Q29 4 49 13 Q69 25 35 36 Q14 41 25 19 M20 46 Q48 5 68 15 Q80 28 44 45" /></svg>
+              </div>
+              <div class="swatch-label od-field"><h3>Green</h3><code>#37D66B</code></div>
+            </article>
+            <article class="swatch od-tile">
+              <div class="swatch-color od-row" style="--swatch:var(--color-cyan);--swatch-ink:var(--color-ink)">
+                <span class="swatch-index">05</span>
+                <svg viewBox="0 0 80 56" aria-hidden="true"><path d="M10 39 Q29 4 49 13 Q69 25 35 36 Q14 41 25 19 M20 46 Q48 5 68 15 Q80 28 44 45" /></svg>
+              </div>
+              <div class="swatch-label od-field"><h3>Cyan</h3><code>#27DCEB</code></div>
+            </article>
+            <article class="swatch od-tile">
+              <div class="swatch-color od-row" style="--swatch:var(--color-blue);--swatch-ink:var(--color-paper)">
+                <span class="swatch-index">06</span>
+                <svg viewBox="0 0 80 56" aria-hidden="true"><path d="M10 39 Q29 4 49 13 Q69 25 35 36 Q14 41 25 19 M20 46 Q48 5 68 15 Q80 28 44 45" /></svg>
+              </div>
+              <div class="swatch-label od-field"><h3>Blue</h3><code>#3455FF</code></div>
+            </article>
+            <article class="swatch od-tile">
+              <div class="swatch-color od-row" style="--swatch:var(--color-purple);--swatch-ink:var(--color-paper)">
+                <span class="swatch-index">07</span>
+                <svg viewBox="0 0 80 56" aria-hidden="true"><path d="M10 39 Q29 4 49 13 Q69 25 35 36 Q14 41 25 19 M20 46 Q48 5 68 15 Q80 28 44 45" /></svg>
+              </div>
+              <div class="swatch-label od-field"><h3>Purple</h3><code>#853BE8</code></div>
+            </article>
+            <article class="swatch od-tile">
+              <div class="swatch-color od-row" style="--swatch:var(--color-pink);--swatch-ink:var(--color-ink)">
+                <span class="swatch-index">08</span>
+                <svg viewBox="0 0 80 56" aria-hidden="true"><path d="M10 39 Q29 4 49 13 Q69 25 35 36 Q14 41 25 19 M20 46 Q48 5 68 15 Q80 28 44 45" /></svg>
+              </div>
+              <div class="swatch-label od-field"><h3>Pink</h3><code>#FF57B5</code></div>
+            </article></div>
+        <div class="neutral-strip">
+          <div class="neutral-item od-row"><span class="neutral-dot" style="--neutral-color:var(--color-ink)" aria-hidden="true"></span><div class="od-field"><strong>Ink</strong><code>#181321</code></div></div>
+          <div class="neutral-item od-row"><span class="neutral-dot" style="--neutral-color:var(--color-paper)" aria-hidden="true"></span><div class="od-field"><strong>Paper</strong><code>#FFFFFF</code></div></div>
+          <div class="neutral-item od-row"><span class="neutral-dot" style="--neutral-color:var(--color-neutral)" aria-hidden="true"></span><div class="od-field"><strong>A little breathing room</strong><code>#F4F4F6</code></div></div>
+        </div>
+        <p class="usage-note"><strong>Keep it readable.</strong> Ink on the bright colors. White on blue, purple, and ink. Paper gives the whole box room to breathe.</p>
+      </section>
+
+      <section id="type" class="foundation" aria-labelledby="type-title" tabindex="-1">
+        <div class="section-heading od-row"><span class="section-index" aria-hidden="true">02</span><div class="heading-copy od-field"><h2 id="type-title">Type with a soft side.</h2><p>Chunky headlines meet a friendly, easy-to-read everyday voice.</p></div></div>
+        <div class="type-grid od-grid">
+          <article class="type-card"><p class="eyebrow">THE BIG PERSONALITY</p><h3 class="specimen-name">Fredoka</h3><p class="display-example">Stay curious.<br>Get a little messy.</p><p class="alphabet">Aa Bb Cc Dd Ee Ff Gg<br>0123456789 !?&amp;</p><div class="type-meta od-field"><strong>Display · 600 / 700</strong><span>Headlines &amp; short statements · 1.1 line height</span></div></article>
+          <article class="type-card"><p class="eyebrow">THE FRIENDLY VOICE</p><h3 class="specimen-name nunito-name">Nunito</h3><p>Good ideas start with a scribble. Round, open letters keep the little things clear, even when the colors get loud.</p><p class="alphabet">Aa Bb Cc Dd Ee Ff Gg<br>0123456789 !?&amp;</p><div class="type-meta od-field"><strong>Body · 400 / 700 / 800</strong><span>Reading, labels &amp; details · 1.6 line height</span></div></article>
+        </div>
+        <div class="type-scale" aria-label="Typography size scale">
+          <div class="type-step od-stat"><strong style="font-size:var(--text-16)">Aa</strong><code>16px</code></div><div class="type-step od-stat"><strong style="font-size:var(--text-20)">Aa</strong><code>20px</code></div><div class="type-step od-stat"><strong style="font-size:var(--text-24)">Aa</strong><code>24px</code></div><div class="type-step od-stat"><strong style="font-size:var(--text-32)">Aa</strong><code>32px</code></div><div class="type-step od-stat"><strong style="font-size:var(--text-48)">Aa</strong><code>48px</code></div><div class="type-step od-stat"><strong style="font-size:var(--text-64)">Aa</strong><code>64px</code></div>
+        </div>
+        <p class="section-footnote">A six-step scale, stored in rem. Body text starts at 16px and grows with your settings.</p>
+      </section>
+
+      <section id="spacing" class="foundation" aria-labelledby="spacing-title" tabindex="-1">
+        <div class="section-heading od-row"><span class="section-index" aria-hidden="true">03</span><div class="heading-copy od-field"><h2 id="spacing-title">Room to scribble.</h2><p>A simple 4px rhythm keeps the playful bits grounded.</p></div></div>
+        <div class="space-grid od-grid"><div class="space-sample od-stat"><div class="space-track"><div class="space-bar" style="--sample-space:var(--space-4)"></div></div><strong>4</strong><code>space-4</code></div><div class="space-sample od-stat"><div class="space-track"><div class="space-bar" style="--sample-space:var(--space-8)"></div></div><strong>8</strong><code>space-8</code></div><div class="space-sample od-stat"><div class="space-track"><div class="space-bar" style="--sample-space:var(--space-12)"></div></div><strong>12</strong><code>space-12</code></div><div class="space-sample od-stat"><div class="space-track"><div class="space-bar" style="--sample-space:var(--space-16)"></div></div><strong>16</strong><code>space-16</code></div><div class="space-sample od-stat"><div class="space-track"><div class="space-bar" style="--sample-space:var(--space-24)"></div></div><strong>24</strong><code>space-24</code></div><div class="space-sample od-stat"><div class="space-track"><div class="space-bar" style="--sample-space:var(--space-32)"></div></div><strong>32</strong><code>space-32</code></div><div class="space-sample od-stat"><div class="space-track"><div class="space-bar" style="--sample-space:var(--space-48)"></div></div><strong>48</strong><code>space-48</code></div><div class="space-sample od-stat"><div class="space-track"><div class="space-bar" style="--sample-space:var(--space-64)"></div></div><strong>64</strong><code>space-64</code></div><div class="space-sample od-stat"><div class="space-track"><div class="space-bar" style="--sample-space:var(--space-96)"></div></div><strong>96</strong><code>space-96</code></div></div>
+        <p class="section-footnote">4–8 for close friends. 12–32 for groups. 48–96 for a little space to think.</p>
+      </section>
+
+      <section id="radius" class="foundation" aria-labelledby="radius-title" tabindex="-1">
+        <div class="section-heading od-row"><span class="section-index" aria-hidden="true">04</span><div class="heading-copy od-field"><h2 id="radius-title">No sharp personalities.</h2><p>Soft corners at every scale, from a small detail to a big idea.</p></div></div>
+        <div class="radius-grid od-grid"><div class="radius-sample od-stat"><div class="radius-demo" style="--sample-radius:var(--radius-small);--sample-color:var(--color-cyan)"></div><h3>Small</h3><code>12px</code></div><div class="radius-sample od-stat"><div class="radius-demo" style="--sample-radius:var(--radius-medium);--sample-color:var(--color-pink)"></div><h3>Medium</h3><code>24px</code></div><div class="radius-sample od-stat"><div class="radius-demo" style="--sample-radius:var(--radius-large);--sample-color:var(--color-green)"></div><h3>Large</h3><code>32px</code></div><div class="radius-sample od-stat"><div class="radius-demo" style="--sample-radius:var(--radius-extra-large);--sample-color:var(--color-orange)"></div><h3>Extra large</h3><code>48px</code></div><div class="radius-sample od-stat"><div class="radius-demo" style="--sample-radius:var(--radius-pill);--sample-color:var(--color-yellow)"></div><h3>Capsule</h3><code>9999px</code></div></div>
+      </section>
+
+      <section id="shapes" class="foundation" aria-labelledby="shapes-title" tabindex="-1">
+        <div class="section-heading od-row"><span class="section-index" aria-hidden="true">05</span><div class="heading-copy od-field"><h2 id="shapes-title">Let the lines wander.</h2><p>A wobbly edge says “made by a person.” Keep the content itself tidy.</p></div></div>
+        <div class="shape-grid od-grid">
+          <article class="shape-item"><div class="shape-canvas"><div class="blob" aria-hidden="true"></div></div><div class="od-field"><h3>The friendly blob</h3><p>Uneven on purpose.<br>Soft in every direction.</p></div></article>
+          <article class="shape-item"><div class="shape-canvas"><svg class="line-art" viewBox="0 0 240 36" aria-hidden="true"><path class="wave-path" d="M4 18 C20 2 32 34 48 18 S76 2 92 18 S120 34 136 18 S164 2 180 18 S208 34 236 18"/></svg></div><div class="od-field"><h3>The wandering line</h3><p>A little emphasis.<br>A lot of character.</p></div></article>
+          <article class="shape-item"><div class="shape-canvas"><svg class="line-art" viewBox="0 0 240 96" aria-hidden="true"><path class="outline-path" d="M20 8 Q119 2 219 10 Q236 13 232 40 L234 73 Q232 89 213 87 Q116 94 23 87 Q5 85 9 67 L7 29 Q6 10 20 8"/><path class="outline-path" d="M20 8 Q119 2 219 10 Q236 13 232 40 L234 73 Q232 89 213 87 Q116 94 23 87 Q5 85 9 67 L7 29 Q6 10 20 8" transform="translate(5 4) scale(.96 .91)"/></svg></div><div class="od-field"><h3>The second pass</h3><p>Two imperfect strokes.<br>One unmistakable outline.</p></div></article>
+        </div>
+        <div class="stroke-guide od-cluster"><div class="stroke-item od-row"><span class="stroke-sample" style="--sample-stroke:var(--stroke-fine)" aria-hidden="true"></span><span>2px · fine ink</span></div><div class="stroke-item od-row"><span class="stroke-sample" style="--sample-stroke:var(--stroke-bold)" aria-hidden="true"></span><span>4px · bold ink</span></div><strong>Round ends. Round joins. No shadows.</strong></div>
+      </section>
+
+      <section id="mood" class="foundation" aria-labelledby="mood-title" tabindex="-1">
+        <div class="section-heading od-row"><span class="section-index" aria-hidden="true">06</span><div class="heading-copy od-field"><h2 id="mood-title">More play. Less polish.</h2><p>Informal by design. Thoughtful where it matters.</p></div></div>
+        <div class="mood-panel"><p class="mood-quote">Color outside<br>the expected.</p><div><div class="mood-words od-cluster"><span class="mood-word">Playful</span><span class="mood-word">Bright</span><span class="mood-word">Tactile</span><span class="mood-word">Informal</span></div><p>Make it feel like opening a fresh box of crayons. A little uneven, full of possibility, and never too precious to play with.</p></div></div>
+      </section>
+
+      <footer class="footer">
+        <div class="od-field"><strong>Lemon Crayon · Static foundations</strong><p>Inspired by the spirit of <a href="https://skribbl.io/" target="_blank" rel="noopener noreferrer">skribbl.io</a>. An original palette and warmer point of view. No motion or animation tokens.</p></div>
+        <div class="footer-links"><a href="DESIGN.md">Read the guide ↗</a><a href="#overview">Back to top ↑</a></div>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
