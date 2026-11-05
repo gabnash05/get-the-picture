@@ -1,0 +1,99 @@
+@font-face {
+  font-family: "Fredoka";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/design/assets/fonts/fredoka-600.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Fredoka";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/design/assets/fonts/fredoka-700.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Nunito";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/design/assets/fonts/nunito-400.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Nunito";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/design/assets/fonts/nunito-700.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Nunito";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/design/assets/fonts/nunito-800.ttf") format("truetype");
+}
+
+:root {
+  --color-red: #ff4343;
+  --color-orange: #ff8a1f;
+  --color-yellow: #ffe83d;
+  --color-green: #37d66b;
+  --color-cyan: #27dceb;
+  --color-blue: #3455ff;
+  --color-purple: #853be8;
+  --color-pink: #ff57b5;
+  --color-ink: #181321;
+  --color-paper: #ffffff;
+  --color-neutral: #f4f4f6;
+  --color-base: var(--color-yellow);
+  --color-surface: var(--color-paper);
+  --color-text: var(--color-ink);
+  --color-outline: var(--color-ink);
+  --color-accent: var(--color-orange);
+  --color-on-bright: var(--color-ink);
+  --color-on-dark: var(--color-paper);
+  --font-display: "Fredoka", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --font-body: "Nunito", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --weight-display: 600;
+  --weight-display-bold: 700;
+  --weight-body: 400;
+  --weight-body-bold: 700;
+  --weight-body-heavy: 800;
+  --text-16: 1rem;
+  --text-20: 1.25rem;
+  --text-24: 1.5rem;
+  --text-32: 2rem;
+  --text-48: 3rem;
+  --text-64: 4rem;
+  --leading-body: 1.6;
+  --leading-display: 1.1;
+  --measure-body: 68ch;
+  --measure-mobile: 38ch;
+  --space-4: 0.25rem;
+  --space-8: 0.5rem;
+  --space-12: 0.75rem;
+  --space-16: 1rem;
+  --space-24: 1.5rem;
+  --space-32: 2rem;
+  --space-48: 3rem;
+  --space-64: 4rem;
+  --space-96: 6rem;
+  --radius-small: 12px;
+  --radius-medium: 24px;
+  --radius-large: 32px;
+  --radius-extra-large: 48px;
+  --radius-pill: 9999px;
+  --stroke-fine: 2px;
+  --stroke-bold: 4px;
+  --stroke-cap: round;
+  --stroke-join: round;
+  --shape-blob: 48% 52% 44% 56% / 54% 46% 54% 46%;
+  --shape-wave: path(
+    "M4 18 C20 2 32 34 48 18 S76 2 92 18 S120 34 136 18 S164 2 180 18 S208 34 236 18"
+  );
+  --shape-outline: path(
+    "M20 8 Q119 2 219 10 Q236 13 232 40 L234 73 Q232 89 213 87 Q116 94 23 87 Q5 85 9 67 L7 29 Q6 10 20 8"
+  );
+  --shadow: none;
+}
