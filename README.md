@@ -33,6 +33,10 @@ Team play is a separate optional mode that must be explicitly selected if implem
 
 The proposed stack is **Next.js** for the web application, **NestJS + Socket.IO** for the authoritative game backend, **FastAPI** for inference, and **PostgreSQL + Prisma** for saved records. Active matches live in one game process's memory, with background archival. See [SYSTEM-DESIGN.md](SYSTEM-DESIGN.md), [the architecture preview](docs/get_the_picture_system_design.png), and [the editable Excalidraw source](docs/get-the-picture-system-design.excalidraw). The frontend canvas base is implemented. The backend, inference services, and production deployment remain a design baseline; no deployment or gameplay/model benchmark is claimed.
 
+## Research evaluation workspace
+
+`research/guesser-evaluation/` is a uv-managed, cross-platform Python/Jupyter workspace for auditing held-out inputs, evaluating frozen model checkpoints, measuring inference latency, and preparing the live inference interface. The environment and smoke-check notebook are set up; the evaluator, inference service, trained weights, and performance results remain future work. See its [setup, usage, and notebook merge-conflict guide](research/guesser-evaluation/README.md).
+
 ## Project focus
 
 The current primary research question is how well humans and a transformer-powered AI identify intended targets from sketches that use shared semantic and cultural visual references. Recognition speed as a sketch develops is secondary.
