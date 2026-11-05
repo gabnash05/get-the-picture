@@ -1,61 +1,60 @@
-# Get the Picture? — System Design
+# More Than Meets the AI - System Design
 
-Consolidated on **31 October 2026 (Asia/Manila)**. Game name: **Get the Picture?**.
+Default mode and scoring revised **4 November 2026 (Asia/Manila)**. This supersedes the earlier team-only gameplay baseline while retaining the Next.js, NestJS, FastAPI and PostgreSQL architecture.
 
-This is the self-contained record of the game and system-design decisions agreed in today's conversation, including the final clarification session. It is the current design reference when an older handoff, README, glossary entry or diagram differs.
+This is the current game/system design reference. The default is **individual free-for-all**. The drawer and the human guessers are separate individual competitors; calling the room "one team" is incorrect. Earlier team language in retained diagrams or fixture UI does not define the default mode.
 
-**Status:** the architecture and behavioral policies below are the agreed design baseline. Module names, internal route names, exact tuning values, model suitability and deployment capacity are not validated implementation results. No application, infrastructure or model benchmark has been produced by this documentation work.
+The canvas frontend is implemented separately. Backend scoring, inference and production capacity described here remain planned behavior, not validated gameplay or model results.
 
 ## Decision status and precedence
 
-- **Confirmed:** flexible team composition, the drawing/guessing/scoring rules, Next.js web application, NestJS + Socket.IO game backend, FastAPI inference boundary, active match state in RAM, PostgreSQL persistence, and the failure policies recorded here.
-- **Explicitly excluded:** Redis and the earlier distributed journal/lease/failover design. One active game process is the baseline.
-- **Working implementation recommendations:** TypeScript, Tailwind CSS, shadcn/ui, Prisma, Pydantic, PyTorch/Transformers, worker isolation, stable event/job identities, bounded queues and versioned model inputs. The detailed responsibilities are included below; these do not imply packages are installed.
-- **Candidates or optional:** Qwen and Florence model selections, Langfuse, frontend authoring tools and physical hosting choices.
-- **Deferred:** exact score weights, timing/limits, answer aliases, ties, model/runtime tuning and the detailed study protocol. These stay explicit rather than becoming accidental defaults.
+- **Confirmed:** default individual play; one shared canvas and rotating drawer; independent human solves and scores; role-specific AI effects; continued play after the first human solve; Next.js, NestJS + Socket.IO, FastAPI, active state in RAM and PostgreSQL persistence.
+- **Separate optional mode:** the earlier flexible team formats, private parallel canvases and first-solve team scoring. Team play requires explicit selection; it is not a fallback/default and need not be implemented with the first backend slice.
+- **Explicitly excluded:** Redis and the earlier distributed journal/lease/failover design. One active game process remains the baseline.
+- **Working recommendations:** TypeScript, Tailwind CSS, shadcn/ui, Prisma, Pydantic, PyTorch/Transformers, worker isolation, stable identities, bounded queues and versioned inputs. These do not imply backend packages are installed.
+- **Deferred:** numeric score weights and caps, exact base-score formulas, simultaneous-answer/tie handling, timing/limits, answer aliases, model/runtime tuning and study protocol.
 
-Latest explicit user decisions take precedence over older alternatives. In particular, the game uses teams rather than fixed pairs, match length need not be even, and live event acceptance no longer waits for an external recovery-journal write.
+Latest explicit user decisions take precedence over older documentation and diagrams. The detailed backend handoff is [BACKEND-SCORING-PLAN.md](docs/BACKEND-SCORING-PLAN.md). It must be read before implementing score calculation, solve handling, AI-result handling or turn termination.
 
-## Agreed game contract
+## Default individual-mode contract
 
-The project is a skribbl.io-inspired multiplayer drawing game for an intelligent-systems class, using transformer-powered guessing and advisory refereeing.
-
-| Topic | Agreed behavior |
+| Topic | Required behavior |
 | --- | --- |
-| Teams | Players agree on the number of teams and the number of players per team. At least two teams compete; a team starts with at least two human players for drawing and guessing. Equal sizes are not required. |
-| Valid formats | Examples include `2v2`, `2v2v2`, `3v3`, `3v3v3`, `2v3` and `3v2v4`. There is no fixed gameplay maximum; practical admission capacity requires measurement. |
-| Roles | Each team has one drawer per round. All its other players are human guessers. Drawer duty rotates through the team after each completed round. |
-| Prompt | Every team receives the same fresh randomly selected prompt each round. Use familiar everyday drawable concepts in the style of ordinary skribbl prompts. AI familiarity is a goal to check, not proof of training exposure. |
-| Private canvas | Each team has a separate canvas. Human guessers see their own team's drawing; opposing drawings and human guess text stay private during active play. |
-| Public information | Opponent/team progress is visible. AI progress is visible, but actual AI guess text stays hidden until the reveal/replay. |
-| Official hints | Human and AI guessers receive the same word length and progressively revealed letters on the same round schedule. |
-| Human guessing | Human guesses have no fixed cap; eligible teammates can keep guessing until the team solves, forfeits or times out. |
-| AI guessing | Each team's logical AI competitor gets the same guess cap and fixed checkpoint schedule. It uses only that team's canonical drawing and permitted official hints. |
-| Team solve | The first correct teammate guess solves the challenge for the whole team. Award one team result, not extra solve scores for every teammate. |
-| Scoring | A correct human solve earns speed-based points even if the AI answered earlier. Beating the AI adds a bonus when the team's race remains eligible. Scores and bonuses are provisional until round finalization. |
-| Challenge finish | A team solve, forfeit or timeout ends that team's challenge and its drawing/AI guessing. Other teams continue. An AI solve alone does not stop human guessing for speed points. |
-| Round finish | Close the round after every team has solved, forfeited or reached the common deadline. Reveal the drawings and AI attempts, and provide the replay. |
-| Match finish | Players agree on a fixed round count. It need not be even or complete every team's drawing rotation. Highest finalized team score wins; exact tie rules are deferred. |
-| AI difficulty | Aim for a credible, beatable competitor with uncertain race outcomes. No accuracy or balance result is established yet. |
-| Drawing strategies | Any visual strategy is legal, including indirect references and private visual codes. Random prompts are not assumed to prevent prearranged codes. |
-| Written clues | Written answer clues are prohibited, including spelling, initials, translations and letter-by-letter hints. Incidental writing that belongs to a depicted object is permitted. |
-| Referee | A separate transformer referee publicly flags suspected written clues. Flags are advisory: no automatic punishment or required erasure. Players resolve disputes. Public warnings do not expose private opposing drawings or recognized text. |
+| Mode | Default to `individual` when no mode is supplied. Do not create an implicit human team or use a team total. |
+| Roles and canvas | One drawer knows the secret target; every other eligible player guesses on the same evolving canvas for their own result. |
+| Rotation and winner | Rotate the drawer through the players. Match length is agreed in the room; highest committed individual score wins. Use a distinct drawing-turn identity so a solve cannot accidentally advance the rotation. |
+| Prompt | One fresh familiar everyday target per drawing turn. AI familiarity must be checked, not assumed from a training-exposure claim. |
+| Human solves | Each player has one accepted correct solve per turn. Incorrect guesses remain uncapped. A solved player cannot earn a second solve or reveal the target to unsolved players. |
+| Guesser score | Speed-based personal points, with a stronger before/after-AI adjustment based on that player's accepted solve order. Human-after-AI still earns positive solve points under the configured formula. No solve earns zero. |
+| Drawer score | Ordinary points depend on human recognition. Add a smaller, capped bonus reflecting the share of eligible humans who beat the AI. The AI itself never contributes a human solve or ordinary drawer points. |
+| AI solve | Record one shared AI solve marker. Stop further guesser attempts from the AI, but let remaining humans guess. Never remove an earlier human's before-AI status because the AI answers later. |
+| First human solve | Mark only that player solved; do not end the turn, freeze the canvas or cancel AI attempts needed by remaining humans. |
+| Turn finish | End when all eligible human guessers have solved or the deadline expires. Explicit disconnect/abandonment policy handles absent players; a first human solve is never the completion condition. |
+| Hints and budget | Human and AI guessers get the same official word-length and revealed-letter hints. The AI has a fixed guess cap/checkpoints; humans have no fixed guess cap. |
+| Visibility | All players see the shared canvas and solve/progress statuses. Keep secret targets and actual AI answer text from unsolved humans until reveal. Correct human answer text must not leak through chat. |
+| Points and finalization | Points are personal and provisional until the turn's required records/result commit. AI-first reduces turn earnings, not previously earned totals. The numeric formula is a configuration decision still to tune. |
+| Strategies and referee | Visual references and private codes remain legal. Written answer hints are banned; incidental writing is allowed. Referee flags are advisory, with disputes resolved by players. |
 
-A voided round does not count toward the agreed match length or advance drawer rotation. Retry that round position with a fresh prompt and new round generation.
+A voided drawing turn retries the same drawer and match position with a fresh target and generation. It does not advance rotation or erase prior committed scores.
+
+### Optional team mode: explicit scope boundary
+
+If selected and implemented, team mode retains player-agreed team counts/sizes, including unequal formats such as `2v2`, `2v2v2`, `3v3`, `3v3v3`, `2v3` and `3v2v4`. Each team starts with at least two humans, has one drawer plus the other members guessing, and uses a private canvas for the same shared target as the other teams. Only progress is public across teams. Its first correct teammate solve closes that team's challenge and creates one speed-based team result plus an eligible beat-the-AI bonus. Other teams continue until solved, forfeited or timed out. Drawer duty rotates within each team, and highest committed team total wins. The agreed fixed team-round count need not complete a rotation.
+
+These are team-mode rules only. Individual mode has no team roster requirement, no private parallel team canvases, no first-human-solve shutdown and no shared human score. Keep the mode's lifecycle and scoring policies explicit in the future backend; a team-oriented field must not force individual players into a synthetic team.
 
 ### Terms used in this design
 
-- **Team challenge:** one team's drawing and guessing competition within a round.
-- **Active human guesser:** an eligible non-drawer who is connected and has completed initial/catch-up synchronization for the current challenge. A connected active guesser's checkpoint readiness is checked separately; it cannot simply be ignored because its acknowledgement is late.
-- **Team solve:** the first correct accepted human guess for that team.
-- **AI checkpoint:** a scheduled opportunity to submit one permitted AI attempt from a frozen drawing/hint state, within the agreed budget.
-- **Provisional result:** a live result that has not yet been finalized and committed for the round.
-- **Finalized result:** the round's confirmed score and eligibility outcome after its required records have saved.
-- **Unavailable AI attempt:** a required attempt that could not be completed, distinguished from an incorrect answer and from normal cancellation.
+- **Drawing turn:** one drawer, one target, one shared canvas, a deadline and independent individual solve outcomes. This is the default scoring/finalization unit.
+- **Active unsolved human guesser:** a connected, synchronized non-drawer who is eligible and has not yet solved this turn. A late checkpoint acknowledgement does not by itself remove a connected player from this set.
+- **Individual solve:** that player's first correct accepted guess, distinct from all other players' outcomes.
+- **AI checkpoint:** a scheduled opportunity to infer from a frozen permitted canvas/hint state within the AI budget.
+- **Provisional/finalized result:** a computed personal result before/after its required records and result commit.
+- **Team challenge/solve:** optional team-mode terms; they are not synonyms for a default drawing turn or individual solve.
 
 ## Design priorities
 
-Responsiveness is the main operational priority. Match state must remain internally consistent even though saved views and archival work can lag behind live play. Human and AI competitors must use the permitted observations; the AI must not knowingly receive a newer drawing/hint version than active human guessers have reported rendering.
+Responsiveness is the main operational priority. Match state must remain internally consistent even though saved views and archival work can lag behind live play. Human and AI competitors must use the permitted observations; the AI must not knowingly receive a newer drawing/hint version than currently active unsolved human guessers have reported rendering.
 
 Keep ordinary drawing delivery independent of SQL reads, page rendering, image compression and GPU inference. Availability in this baseline means independent matches and sensible client reconnection while the game process runs. A restart interrupts its hosted matches; transparent server failover is outside the selected baseline.
 
@@ -77,7 +76,7 @@ The retained Excalidraw diagram is a high-level architecture sketch. The precise
 | --- | --- | --- |
 | Browser interface | Next.js, React, TypeScript, Tailwind CSS, shadcn/ui | UI, Canvas 2D renderer, socket client and rendered-version tracking |
 | Web application | Next.js App Router | Pages, guest-session interface, lobby and replay views; calls game-owned APIs |
-| Game backend | NestJS on Node.js, TypeScript, Socket.IO | Authoritative rooms, teams, prompts, hints, clocks, guesses, scoring, attempts and live match state |
+| Game backend | NestJS on Node.js, TypeScript, Socket.IO | Authoritative rooms, explicit mode, player roles, prompts, hints, clocks, per-player solves/scores, attempts and live state |
 | Render workers | NestJS-owned worker processes/threads | Canonical drawing snapshots and image compression outside the game event loop |
 | AI service | Python, FastAPI, Pydantic | Internal job contracts, bounded admission, deadlines and pushed completions |
 | Inference workers | PyTorch, Hugging Face Transformers | Loaded candidate models and bounded GPU scheduling; no direct game-database access |
@@ -87,7 +86,7 @@ The retained Excalidraw diagram is a high-level architecture sketch. The precise
 
 NestJS is the application framework. Its Socket.IO gateway receives drawing, guess and status events; HTTP controllers expose room, session, saved replay and research-export APIs. Nest supports Socket.IO gateways and shares application facilities such as providers, guards and validation with them. See [NestJS gateways](https://docs.nestjs.com/websockets/gateways).
 
-Keep a single application-level match registry and one deterministic engine per match. Gateways and controllers call the same engine; async handlers must enter that match's explicit serialized event queue. Framework routing alone does not serialize competing human guesses and AI results. Suggested modules are rooms/teams, match lifecycle and scoring, AI coordination, persistence, and replay/exports. These are organizational boundaries inside the backend, not new network services.
+Keep a single application-level match registry and one deterministic engine per match. Gateways and controllers call the same engine; async handlers must enter that match's explicit serialized event queue. Framework routing alone does not serialize competing human guesses and AI results. Suggested modules are rooms/players/mode selection, match lifecycle and scoring, AI coordination, persistence, and replay/exports. These are organizational boundaries inside the backend, not new network services.
 
 Next.js Client Components handle browser interactivity. Per-stroke Canvas updates stay in an imperative renderer while React handles lower-frequency UI state. See [Next.js Server and Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components). Keep image processing and model work away from the realtime event loop; see [Node.js event-loop guidance](https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop).
 
@@ -95,18 +94,19 @@ Stitch, v0 and Figma remain optional design-authoring choices, not runtime depen
 
 ## Gameplay and live drawing path
 
-The game supports player-agreed team counts and sizes, including unequal teams. Every round has one drawer per team and all remaining teammates guessing. All teams receive the same fresh prompt, shared hint schedule and time limit. Drawer duty rotates each round; match length is an agreed fixed count.
+Default gameplay is a single shared drawing turn with individual competitors. Optional parallel team challenges require an explicit mode-specific branch.
 
-1. A guest joins with a stable application identity. Check room membership and role on protected events; room codes and transient socket IDs are not authorization.
-2. Save match setup, team rosters, rules and rotation information. Record round-start metadata before starting the shared clock. Deliver the full target only to drawers.
-3. A drawer paints locally and sends small operation batches with stable IDs. A provisional 16–33 ms batch interval is a tuning starting point, not a measured optimum.
-4. The NestJS match engine checks membership, role, operation limits and ordering, then serializes the event, assigns its canonical sequence and updates RAM.
-5. Confirm live acceptance and broadcast the operations immediately after that in-memory transition. Enqueue a copy for background persistence. **Live acceptance means accepted into the current process's match state, not already committed to durable storage.**
-6. Human clients apply accepted operations directly to Canvas. They deduplicate retries, detect sequence gaps and reconcile local optimistic drawing with canonical state.
-7. The first correct teammate answer closes the team's challenge and records one provisional score plus any eligible AI bonus. Cancel that team's drawing and further AI guessing.
-8. Other teams continue until all challenges solve, forfeit or time out. Close the round and reveal/replay its recorded events. The live replay may use RAM while saving is pending. Flush the required records and finalize the result once before advancing the match and rotating drawers.
+1. A guest joins with stable identity. Check room membership and the current role; a room code or transient socket ID is not authorization. An absent mode selection resolves to individual.
+2. Save the mode, player roster, scoring-configuration revision, match length and drawer order. Record turn-start metadata and the deadline before play. Send the full target only to the drawer.
+3. The drawer paints locally and sends operation batches with stable IDs. The frontend's 33 ms target is a starting point for measurement, not a latency guarantee.
+4. The NestJS engine validates operations and enters the turn's serialized state-transition queue. Assign canonical sequence numbers and update RAM.
+5. Confirm and broadcast after the in-memory transition; enqueue a copy for background persistence. Live acceptance does not promise the event has already reached durable storage.
+6. Human clients apply/deduplicate operations and report rendered versions. The drawer reconciles optimistic local painting against the accepted state.
+7. A correct human guess creates exactly one provisional personal solve. Continue drawing, unsolved human attempts, hints and remaining AI opportunities. Route AI results and human guesses through the same ordered engine.
+8. The AI's first accepted correct answer establishes the shared comparison marker and stops further AI guesser jobs. Remaining humans can still solve for reduced turn earnings. Later AI output cannot change a human's already-established before-AI ordering.
+9. End at all eligible humans solved or the common deadline, subject to an explicit abandoned-turn policy. Close remaining jobs and reveal/replay. A live replay may use RAM while saving is pending. Flush required records, finalize personal guesser/drawer results once and then advance to the next drawer.
 
-Stroke delivery does not invoke a Next.js Server Action, route render, per-stroke SQL read or full-image upload. PostgreSQL writes are batched in the background, not awaited by each stroke. Socket.IO preserves ordering but defaults to at-most-once delivery, so stable operation IDs, retry handling, gap detection and resynchronization remain application responsibilities. See [Socket.IO delivery guarantees](https://socket.io/docs/v4/delivery-guarantees/).
+Stroke delivery does not invoke a Next.js Server Action, route render, per-stroke SQL read or full-image upload. PostgreSQL writes are batched in the background. Socket.IO preserves ordering but defaults to at-most-once delivery, so stable IDs, retries, gap detection and resynchronization remain application responsibilities. See [Socket.IO delivery guarantees](https://socket.io/docs/v4/delivery-guarantees/).
 
 ## Active state and persistence
 
@@ -119,96 +119,94 @@ Stroke delivery does not invoke a Next.js Server Action, route render, per-strok
 
 Use Prisma through game-owned persistence services. Archive by stable event/attempt identity, update the archive watermark only after commit, and make retries idempotent. Use bounded queues and admission/backpressure when the writer cannot keep up; do not silently drop events or declare a replay complete before its required records are saved.
 
-Before finalizing a round, flush all of its required event batches and artifacts, then commit its final result with a unique logical round identity. Live round points and bonuses remain provisional until that commit. A voided generation cannot finalize later or count twice. Save enough match setup and rotation metadata to resume at the correct round position after restart.
+Before finalizing an individual drawing turn, flush its required event batches and artifacts, then commit all personal outcomes with a unique turn/generation identity. Live points and AI adjustments remain provisional until that commit. A voided generation cannot finalize later or count twice. Save enough match setup and rotation metadata to resume the same drawer/turn position after restart. Optional team mode finalizes its team outcomes at its own round boundary.
 
-These are round-boundary writes, not per-stroke waits. If PostgreSQL is unavailable, finish the current round within the bounded RAM buffer, then wait for its required records and result to commit before starting the next round. Results remain provisional while saving is pending. Finalized rounds have committed replay records; an interrupted, unfinalized round may have only a partial archive. Do not reconstruct it as a completed competitive round or promise that its unflushed events survived.
+These are turn-boundary writes, not per-stroke waits. If PostgreSQL is unavailable, finish the current turn within the bounded RAM buffer, then wait for required records and results to commit before starting the next turn. Results remain provisional while saving is pending. Finalized turns have committed replay records; an interrupted turn may have only a partial archive. Do not reconstruct it as a completed competitive turn or promise its unflushed events survived.
 
 Exact input images can initially be stored as versioned game-owned artifacts in PostgreSQL. A separate artifact store can be introduced if measured volume justifies it. Live inference never waits for archival merely to obtain its input.
 
 ### Required logical records and identifiers
 
-These are conceptual records the system needs; final table/route names and column types are not fixed yet.
+These are conceptual records; exact route/table names and column types remain implementation choices.
 
 | Record | Information to retain |
 | --- | --- |
-| Match setup | Stable match ID, guest identities, agreed team membership/sizes, room rules, fixed round count and drawer rotation |
-| Logical round and generation | Match round position, fresh prompt/target kept server-side, retry generation, common clock/hint schedule, started/void/finalized state |
-| Team challenge | Team ID, assigned drawer, eligible guessers, progress, first accepted human solve, AI status, budget/reservations and bonus eligibility |
-| Drawing event | Stable operation/event ID, team/canvas identity, canonical sequence, timing, coordinates/tool parameters and erase/undo/clear semantics |
-| Human attempt | Stable attempt/event identity, player/team/round, submitted answer and authoritative acceptance order/time |
-| AI attempt | Reserved attempt/checkpoint/job identity, server instance/generation, frozen input versions/hash, model role/config, timing, terminal outcome and eligibility |
-| Hint event | Official hint version, revealed state and common round timing |
-| Referee flag | Suspected incident, private evidence/region references, public notice, versions and timing; no automatic penalty |
-| Model-input artifact | Exact permitted input snapshot or reproducible renderer identity, image hash, hint state, model/prompt/preprocessing revisions |
-| Round result | Finalized team points, bonus eligibility and reasons, commit identity and replay/export completeness |
+| Match setup | Match ID, explicit/defaulted mode, stable player IDs, rules/config revision, match length and drawer order; team membership only for selected team mode |
+| Drawing turn and generation | Turn ID, match/rotation position, drawer, eligible human roster, server-only target, deadline/hints, generation and started/void/finalized state |
+| Human solve state | Per-player unsolved/solved state, first accepted solve sequence/time, base points, AI ordering classification and score components |
+| Drawing event | Stable ID, canvas identity, canonical sequence, time, coordinates/tool parameters and erase/undo/clear semantics |
+| Human attempt | Stable ID, player/turn/generation, submitted answer, correctness and authoritative acceptance sequence/time |
+| AI attempt and solve | Reservation/checkpoint/job IDs, instance/generation, frozen input versions/hash, model/config, timing, outcome and first correct accepted AI sequence |
+| Hint or referee event | Hint versions or advisory incident/evidence, associated canvas/input identity and timing; referee flags never directly deduct scores |
+| Input artifact | Exact permitted snapshot or tested renderer identity, image hash, hint state and model/prompt/preprocessing revisions |
+| Personal score result | Player, role, turn/generation, human-only base, AI adjustment, drawer bonus where applicable, eligibility/reason, config revision and commit identity |
+| Optional team result | Separate mode-scoped team challenge/first-solve result; never the default individual ledger |
 
-Stable IDs and per-match/canvas ordering support deduplication and gap recovery. `serverInstanceId` and `roundGeneration` reject stale work after restart or retry; they do not implement distributed ownership. Persist labels for later evaluation separately from the actual model-visible input. Finalized round results must reference the correct generation and must not be counted twice.
+Stable IDs and per-turn/canvas ordering support deduplication and gap recovery. `serverInstanceId` and generation reject stale work; they do not implement distributed ownership. A canvas/turn ID identifies default AI jobs without a fabricated team ID. Keep target labels separate from actual model input. Individual totals derive from committed personal results, with one result per player/role/turn generation. See [the scoring plan](docs/BACKEND-SCORING-PLAN.md) for result components and acceptance cases.
 
 ## Client reconnects and game-server restarts
 
 ### Temporary participant disconnect or lag
 
-Connected teammates keep drawing and guessing. Remove a disconnected participant from the active-guesser set, rather than suspending the whole team. A connected guesser whose rendering is merely behind still participates in the observation check until the configured lag/inactive policy applies; do not bypass the fairness check by treating every unacknowledged client as absent.
+In individual mode, other players continue after one disconnects. Keep accepted personal solves. A solved player does not return to the unsolved set, and reconnecting cannot grant a second score or reset their before/after-AI classification. A disconnected unsolved guesser becomes inactive for observation checks, but an explicit deadline/eligibility policy must govern their unresolved turn outcome; being disconnected is not a correct solve.
 
-If a team has several human guessers and at least one remains active, it continues even if another teammate never returns. That absent teammate's grace expiry does not forfeit the team. If the assigned drawer disconnects, the existing sketch remains available for guessing, official hints continue, and drawing waits for that drawer to return. There is no automatic mid-round promotion of a guesser to drawer.
+If the drawer disconnects, the existing sketch and official hints remain available. Drawing waits for that drawer; do not promote a guesser who does not know the target without an explicit rule. If no active unsolved human guesser remains, do not run new competitive AI checkpoints against an empty set. Numerical grace and abandoned-turn closure rules must be settled before enabling this lifecycle.
 
-Start the team's no-guesser recovery grace when it has no active eligible human guesser. Other teams and the common round clock continue. While there is no active guesser, do not release new AI inputs or let an AI race proceed against an empty human-competitor set. In-flight work may physically finish, but its competitive handling must respect this recovery state. If no guesser returns and resynchronizes before grace expires or the round deadline closes the challenge, the team forfeits/times out as applicable. A returned drawer cannot count as a guesser because that role already knows the target.
+Returning players reauthenticate, obtain the correct canvas/hints/sequence, and acknowledge catch-up before rejoining active observation checks. A still-active connected guesser's late acknowledgement cannot simply be ignored to release an AI checkpoint. Solved players are outside the unsolved competitor set. Ended/voided turns cannot reopen on reconnect.
 
-A returning participant reauthenticates and receives a role-filtered snapshot with current round, canvas, hints and sequence position. A returning guesser becomes active only after acknowledging that catch-up view. Cancel the no-guesser forfeit countdown when at least one eligible guesser has recovered. If a team has already solved, a later teammate disconnect does not erase that solve. A finished or forfeited challenge cannot be reopened by a reconnect.
+In optional team mode, the earlier team-scoped grace remains: a team continues while a human guesser is active; no-guesser grace expiry forfeits that active team challenge only. A returned drawer is never a guesser for a target they already know.
 
-Socket.IO's optional connection-state recovery can help with missed packets, but application synchronization and role checks are still needed when it fails. See [Socket.IO connection-state recovery](https://socket.io/docs/v4/connection-state-recovery/).
+Socket.IO connection-state recovery can help with missed packets, but application synchronization and role checks are still required. See [Socket.IO connection-state recovery](https://socket.io/docs/v4/connection-state-recovery/).
 
 ### Game-process restart
 
-Assign a new server-instance identity. Load saved match setup, team rosters, rotation and finalized prior-round results. Void any unfinalized active round, discard its provisional score, and retry the same match position with a fresh prompt and generation. Do not advance rotation or consume a match round. Reject completions and buffered actions from the old instance/generation. Already committed rounds remain in the saved score ledger.
+Assign a new server-instance identity. Load saved mode, player roster, drawer order and committed prior results. Void the unfinalized drawing turn and its provisional personal results; retry the same drawer/turn position with a fresh prompt and generation. Do not advance rotation. Reject old-instance/generation actions and completions. Prior committed scores remain. In selected team mode, apply the corresponding team-round void/retry policy.
 
 One active NestJS game process is the deployment baseline. Its in-memory registries are not shared across independent replicas. Accepted but unflushed live events can be lost on restart. Every active match hosted in a failed process is interrupted; a normal participant disconnect leaves other matches running.
 
-## Agreed failure and scoring policies
+## Failure and scoring policies by mode
 
-| Situation | Final agreed response |
+| Situation in default individual mode | Required handling / implementation boundary |
 | --- | --- |
-| A teammate disconnects but at least one human guesser remains active | Connected teammates continue. Only currently active guessers participate in the AI observation barrier. An absent member's grace expiry does not automatically forfeit the whole team. |
-| The drawer disconnects while human guessers remain | Guessers may continue using the existing canvas and official hints. Drawing waits for the assigned drawer to return. |
-| No eligible human guesser remains active | Allow bounded team recovery grace; other teams and the common timer continue. Resume after a guesser returns and catches up; otherwise forfeit/time out the active challenge at the applicable deadline. |
-| A checkpoint is missed because that team's human clients were not ready | Keep its human speed points, but disable only that team's AI bonus for this round. Other teams retain their eligibility. |
-| A required guesser attempt is unavailable because of an AI-service fault | Keep human speed points and disable the AI bonus for every team in the affected round. |
-| Referee service fails | Advisory flagging is unavailable. Do not fabricate a clean verdict or impose an automatic penalty. |
-| PostgreSQL cannot save while the game process survives | Finish the current round within the bounded RAM buffer, then wait for its required records and final result to save before starting the next round. Keep results provisional while saving is pending. |
-| The game process restarts, or the current competitive history cannot be verified | Void the unfinished round for all teams, keep committed prior-round scores, and retry with a fresh prompt without consuming a match round or rotating drawers. |
+| One human solves before the AI | Preserve that personal before-AI result; continue the turn for everyone still unsolved. |
+| The AI solves before another human | Apply the configured reduced turn earnings only to that human's later correct solve; do not deduct prior totals or alter earlier solvers. |
+| One player disconnects | Keep accepted solves and let others continue. Finalize absent-player outcomes under an explicit individual deadline policy, never a whole-room team forfeit. |
+| Required AI guesser work fails | Use human-only scoring for the affected turn: neutralize both positive and negative AI-derived guesser adjustments and the drawer AI bonus for everyone. Do not treat an unavailable attempt as a wrong guess or an AI that humans successfully fooled. |
+| A checkpoint cannot run fairly because clients are not ready | Record a readiness miss separately. The individual-mode scoring consequence must be specified before implementation; the old team-only bonus-removal rule cannot decide it. Do not award a fabricated fair AI comparison. |
+| Referee fails | Advisory flags unavailable; no automatic score penalty or invented clean verdict. |
+| PostgreSQL cannot commit | Finish within bounded RAM buffering, then keep results provisional and wait before starting the next turn. |
+| Game restart or unverifiable competitive history | Void the unfinished turn and retry the same drawer with a fresh target; keep committed prior personal results. |
 
-These distinguish three different outcomes: an AI's wrong answer, a team-specific missed opportunity caused by human-side readiness, and an AI-service failure. They have different bonus consequences and must not be collapsed into a fabricated incorrect guess.
+All AI-derived adjustments remain provisional until finalization so fault handling can apply consistently. A service fault may neutralize a turn's AI scoring; a late successful model answer cannot retroactively beat an earlier accepted human solve. Cancellation because all humans solved, the AI solved, the deadline expired or the turn was voided is not itself a service outage. Missed checkpoints expire; reconnecting does not grant overdue attempts.
 
-AI-bonus eligibility is one-way within the round: once a qualifying client-readiness miss removes a team's eligibility, reconnecting does not restore that bonus; a service fault removes it for everyone. Normal cancellation after a human solve, AI solve, timeout, forfeit or void is not an outage. In particular, a human solving before a future checkpoint does not count as a missed required AI opportunity.
-
-Late AI output cannot turn an earlier accepted human solve into an AI win. Round-wide bonus removal and explicit voiding are the agreed finalization policies. Missed checkpoints expire; reconnect does not grant a burst of overdue guesses. Exact grace and lag values are deferred tuning parameters.
+Optional team mode retains its separate rules: a human-side readiness miss removes only that team's AI bonus; a required AI-service fault removes bonuses across that team round; connected teammates continue and no-guesser grace can forfeit one challenge. These team-scoped outcomes must not be used as the default individual scoring policy.
 
 ## AI observations and result acceptance
 
-At each scheduled checkpoint, freeze the active team's canonical canvas version `V` and official hint version `H`. A worker renders the accepted operations. Before releasing that input to the AI, require every active human guesser on that team to acknowledge rendering at least `V` and `H`. Each team's barrier is independent, so healthy teams can continue under the agreed grace/forfeit policy.
+At each scheduled checkpoint, freeze the default turn's canonical canvas version `V` and official hint version `H`. Render that accepted checkpoint once. Before releasing it for inference, require every currently active unsolved human guesser to acknowledge at least `V` and `H`. At least one such guesser must exist; the empty set never satisfies readiness. The first human solve removes only that solved player from future competitor sets and does not cancel the remaining race.
 
-Disconnected guessers are temporarily inactive and do not block connected teammates. At least one active human guesser must exist. Every guesser in the currently active set must acknowledge the frozen canvas and hint versions; the empty set never satisfies the barrier. Active-set changes are serialized with the checkpoint decision. A returning guesser first receives and acknowledges a current role-filtered catch-up view before becoming eligible to guess or join later barriers. Do not exclude a still-active connected guesser merely to bypass its missing checkpoint acknowledgement.
+Serialize active-set changes with checkpoint decisions. Disconnected players become inactive, returning players must acknowledge catch-up, and a still-active client cannot be excluded merely to bypass a late acknowledgement. An acknowledgement reports application-rendered state, not conscious perception or identical arrival time. Record rendering/release differences and use explicit lag/grace bounds. In selected team mode this same observation rule applies separately per private team canvas.
 
-An acknowledgement reports application-rendered state, not conscious observation or identical perception timing. Record rendering/release and scheduling differences. Bound missing acknowledgements so a lagging participant does not stall indefinitely.
+Reserve each AI attempt once in the NestJS engine. Jobs bind match/mode, drawing-turn/canvas/generation, server instance, checkpoint/attempt/job IDs, model role, frozen input versions/hash, capture/release/deadline times and renderer/model/prompt/config revisions. A team ID is relevant only in selected team mode. Model input contains only the image and permitted hints, never the secret target or human answer text.
 
-The NestJS engine reserves an AI attempt once in live match state before dispatch. A job binds `jobId`, `serverInstanceId`, `matchId`, `roundId`, `roundGeneration`, `teamId`, model role, checkpoint/attempt IDs, canvas and hint versions, snapshot hash, capture/release times, deadline and renderer/model/prompt/config revisions. It contains only the canonical image and permitted official hints. The secret target, human guesses and private opposing canvas stay outside model input.
+FastAPI validates internal jobs, bounds inference admission and pushes completions with acknowledgements/retry/deduplication. Periodic polling is not the normal completion path. See [FastAPI WebSockets](https://fastapi.tiangolo.com/advanced/websockets/).
 
-FastAPI validates authenticated internal jobs and sends bounded inference work to workers. Completions are pushed over an internal channel with application acknowledgements and retry/deduplication; periodic polling is not the normal result path. See [FastAPI WebSockets](https://fastapi.tiangolo.com/advanced/websockets/).
+NestJS checks instance/generation, turn activity, expected job/input identity, deadline and valid unconsumed reservation. Serialize result acceptance with human guesses. Compare the frozen reserved input, not equality with the latest canvas version. Record the first correct accepted AI event as the comparison marker; do not backdate it using GPU start/finish time. Retry cannot double-consume an attempt or score. The final reserved attempt remains valid when unreserved budget reaches zero.
 
-The NestJS match engine checks the current server instance and round generation, team activity, expected job/input identity, deadline and unconsumed reservation. It serializes acceptance with human guesses, updates RAM and enqueues the outcome for archival. Validate against the job's frozen input, not equality with the latest canvas version: later strokes do not by themselves invalidate a checkpoint. Use authoritative live acceptance order; no backdated AI wins or duplicate scoring. A final reserved attempt remains valid even when the unreserved budget is zero.
+After an individual human solves, retain the drawing and AI schedule for remaining humans. After the AI solves, cancel its remaining guesser work while humans continue. At actual turn closure cancel remaining work; late results cannot score after close, void or restart. Optional team mode can still close its challenge at the first teammate solve. FastAPI never awards scores or directly writes the game database; referee work is independent.
 
-Stop remaining guesser attempts once the AI answers correctly while humans continue for speed points. Stop all of a team's work when its challenge ends. In-flight work may physically finish but cannot score after solve, forfeit, timeout, void or restart. FastAPI does not award scores or directly write the game database. Its referee task is separate from guesser scoring.
+The renderer stays on the AI host in the two-host proposal. Reuse its decoded image for inference, and encode/return the checkpoint PNG for background backend archival. Dataset export reads saved images and records; extra frames are rendered offline. The worker-buffer/IPC mechanism is an implementation choice; the diagram does not imply a shared JavaScript object across hosts.
 
 ### Candidate models
 
 - **Guesser:** [Qwen/Qwen3-VL-2B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct), which supports image/text input. Accuracy and latency for these incomplete, reference-based sketches remain untested.
 - **Referee evidence:** [microsoft/Florence-2-base](https://huggingface.co/microsoft/Florence-2-base), which documents OCR with text regions. A detected region does not establish an illegal hint because incidental writing is permitted. Flags remain advisory.
 
-Keep weights loaded, bound GPU concurrency and schedule fairly across team checkpoint jobs. A loaded model can serve multiple logical team races subject to measured throughput. Referee tasks must not starve guesser checkpoints. Record capture, render-ACK release, enqueue, inference start/finish and backend receipt times; version preprocessing, prompts and generation settings.
+Keep weights loaded, bound GPU concurrency and schedule fairly across active drawing-turn checkpoint jobs. A loaded model can serve multiple drawing-turn jobs and optional team races subject to measured throughput. Referee tasks must not starve guesser checkpoints. Record capture, render-ACK release, enqueue, inference start/finish and backend receipt times; version preprocessing, prompts and generation settings.
 
 ## Privacy, replay and research
 
-Full target prompts go only to drawers. Human guessers see their team's canvas and the shared official hints. Opponents receive progress only; AI guess text remains hidden until reveal. Public referee warnings identify a suspected incident without leaking an opposing canvas, recognized private text or cropped image.
+Full targets go only to the assigned drawer. In default individual mode everyone sees the shared canvas and official hints, but unsolved players cannot see accepted correct answer text from solved players or the AI before reveal. Referee flags remain advisory. Private opposing-canvas evidence is relevant only to optional team mode and must stay private there.
 
 Replay reconstructs strokes, erasure, undo, clear, hints, guesses, solves and advisory flags from canonical events. It can show the AI's first correct guess and mistakes without claiming an internal moment of understanding. Retain exact input artifacts and hashes, or a tested deterministic renderer/revision that can reproduce them; the pilot proposal uses archived input artifacts.
 
@@ -220,45 +218,46 @@ Use structured logs and metrics first; Langfuse is optional. Keep evaluation lab
 
 Next.js, the single persistent NestJS game process, PostgreSQL and the GPU/FastAPI application are separately restartable components. The GPU host can be separate from the CPU host; place them suitably near players and one another. Keep heavy image work and inference off the realtime event loop.
 
-Measure remote-paint latency, event-loop delay, archival backlog/flush latency, client resynchronization, queue/inference tails and per-team scheduling skew. Use a shared clock/test harness or calibrated estimates instead of subtracting unsynchronized client clocks. The earlier regional p95 drawing-visibility example below 100 ms and the 16–33 ms batch interval are provisional targets, not results. Team-count flexibility does not imply unlimited hardware capacity; measured admission limits are still needed.
+Measure remote-paint latency, event-loop delay, archival backlog/flush latency, client resynchronization, queue/inference tails and per-turn/model-job scheduling skew. Use a shared clock/test harness or calibrated estimates instead of subtracting unsynchronized client clocks. The earlier regional p95 drawing-visibility example below 100 ms and the 16–33 ms batch interval are provisional targets, not results. A shared canvas and optional team-count flexibility do not imply unlimited capacity; measured player/match/job admission limits are still needed.
 
 ### Validation plan
 
-Verify wrong-team access and drawer-only prompt delivery; duplicate, out-of-order and missing drawing operations; canonical browser/server rendering; multi-guesser observation barriers; live active-set changes and reconnect catch-up; same-process reconnection versus process restart; old-instance/old-generation AI results; human-solve/AI-result races; per-team readiness-related bonus loss versus round-wide service-outage bonus loss; partial-team continuation and no-guesser forfeits; database saving holds; finalization idempotence; and replay equivalence.
+Before backend scoring is enabled, execute the acceptance scenarios in [BACKEND-SCORING-PLAN.md](docs/BACKEND-SCORING-PLAN.md). Verify individual mode is the default; a first human solve preserves the canvas/AI race; each guesser is scored once; AI-first changes only later personal earnings; drawer credit excludes AI recognition; an unreadable image cannot earn an evasion bonus; service faults neutralize all AI adjustments; and results/finalization are idempotent.
 
-Vitest, Playwright and pytest were proposed for TypeScript, browser and Python verification respectively. The exact unit-test integration is not fixed by this design. Browser tests should exercise actual drawing/guessing flows, and model pilots should use a small reviewed sketch set. No application tests, load tests, model training, inference benchmarks or production recovery tests have run in this documentation task.
+Also verify role/target privacy, no solved-answer chat leakage, duplicate/out-of-order/gapped operations, canonical rendering, active-unsolved observation barriers, reconnect versus restart, stale AI jobs, accepted human/AI order, database saving holds and replay/export equivalence. Optional team policies need their own explicit-mode tests.
+
+Vitest, Playwright and pytest are the proposed TypeScript/browser/Python tools. The frontend has its own validation report; no backend scoring, AI training, load or production-recovery verification is claimed by this documentation update.
 
 ### Decisions deliberately left for implementation planning
 
 - Visual identity; authoring workflow among the discussed Stitch, v0 and Figma options. A future design system should cover typography, spacing, team/AI status treatment, canvas tools, hints, scores, warnings, replay and disconnected/waiting/reveal states.
-- Exact point formula and relative bonus weight, accepted answer variants/typos and tie handling.
-- Numeric round time, hint reveals, AI guess cap/checkpoints/deadlines, reconnect grace and lag detection thresholds.
+- Individual base-score formula, before/after-AI weights, smaller drawer bonus/cap, eligible-roster normalization, answer variants/typos and same-time/tie handling. See the scoring plan; do not copy an illustrative numeric example as a finalized rule.
+- Drawing-turn/match-round presentation, numeric time/hints/AI budget/checkpoints/deadlines, reconnect grace, lag bounds, unresolved-player/no-guesser turn closure and individual-mode readiness-miss scoring consequences.
 - Batch sizing, canvas/tool limits, buffer/backpressure limits, export retention and data collection/consent details.
 - Actual model selection, runtime settings, memory/concurrency/batching and any later fine-tuning; available hardware and hosting/region topology.
 - The detailed sketch-study procedure, sample size, comparison baselines and analysis protocol. Correct target recognition remains primary and speed secondary; detailed reference explanations remain future work.
 
-The team-specific missed-checkpoint policy and database-outage behavior are now resolved above; they are not open questions. Numerical choices remain unvalidated until pilots. The core topology does not include transparent multi-process active-match failover.
+The default individual scoring direction is confirmed, but its numeric tuning and readiness/disconnect edge policies still require explicit implementation decisions. The older team-specific readiness policy applies only when team mode is selected. Database saving holds remain required. Transparent multi-process failover is outside the baseline.
 
 ## Decision rationale and finalization record
 
 | Decision | Rationale and accepted consequence |
 | --- | --- |
-| Flexible team sizes, including unequal teams | Room participants agree on composition; one team result avoids multiplying solve points by the number of guessers. No automatic team-size handicap was agreed. |
-| NestJS + Socket.IO backend | Use an explicit backend framework for controllers, gateways and modular services while keeping one authoritative in-memory engine per match. |
-| Live RAM plus PostgreSQL archival | Keep live stroke delivery responsive and the operational baseline small; server restart loses unfinished live state and voids those rounds. |
-| Fixed checkpoint opportunities and common official hints | Make the AI's gameplay handicap explicit; do not confuse game outcomes with an isolated sketch-recognition study. |
-| Active-guessers-only observation barrier | Disconnected players do not block connected teammates. At least one eligible guesser must be active, and every currently active guesser must acknowledge the frozen input. |
-| Partial teams continue | One absent member does not forfeit an otherwise playable team. With no active human guesser, bounded recovery grace applies before forfeit. A disconnected drawer leaves an existing sketch available to guess. |
-| Client-readiness checkpoint miss | Preserve human speed points and remove only that team's AI bonus for the round. Reconnection cannot restore the missed competitive opportunity. |
-| Required guesser-service attempt unavailable | Keep human speed points and remove AI bonuses across the round, treating service failure separately from an AI mistake. |
-| PostgreSQL saving failure | Complete the current round, keep its result provisional and wait for its required records/result to commit before starting the next round. |
-| Separate sketch-focused comparison | Compare human/AI target recognition without gameplay hints or the AI handicap. Private codes and detailed explanation scoring do not enter the main comparison. |
+| Default individual free-for-all | One shared canvas, rotating drawer, individual solves and leaderboard. Drawer and guessers compete individually; a one-team representation is incorrect. |
+| Stronger personal AI effect for guessers | Compare each person's own solve against the shared AI marker. Someone else's late answer does not undo an earlier player's success. |
+| Smaller capped drawer AI bonus | Reward human-readable, AI-challenging drawings while retaining ordinary human-recognition incentives. No credit for the AI itself solving or for nobody understanding the sketch. |
+| Continue after first human solve | Preserve every remaining human's chance to solve and compare against the AI. The AI or first human is not a turn-wide winner-takes-all shutdown signal. |
+| Team mode is optional | Preserve earlier flexible-team rules under explicit mode selection, isolated from the individual default. |
+| NestJS + RAM + PostgreSQL | One authoritative process hosts matches; background archival keeps SQL off strokes. Restart voids unfinished turns and preserves committed prior results. |
+| Shared permitted observations | Checkpoints use frozen canvas/hints acknowledged by currently active unsolved humans. Fair observation is distinct from identical physical timing. |
+| Human-only fallback for AI-service failure | Remove both AI rewards and reductions for the affected default turn rather than pretending the failed AI lost fairly. |
+| Saving holds and separate study | Persist complete results before advancing. Sketch-focused research remains distinct from gameplay hints and AI handicaps. |
 
-The final clarification session confirmed: connected teammates continue during grace; only currently active guessers acknowledge inputs; a readiness-related missed checkpoint removes that team's bonus only; saving must complete before the next round; and a team forfeits for absent guessers only if no eligible human guesser recovers within grace. These clarifications supersede broader earlier statements about forfeiting an entire team whenever any member fails to reconnect.
+The 4 November individual-mode clarification supersedes the earlier team-default contract. Numeric scoring balance is still unvalidated and must be tuned through gameplay, not inferred from role names.
 
 ## Retained architecture diagram
 
 - [Editable Excalidraw source](docs/get-the-picture-system-design.excalidraw).
 - [PNG preview](docs/get_the_picture_system_design.png).
 
-Edit the source in Excalidraw and export a new PNG when the sketch changes. The source and current preview are retained without changes in this cleanup. The detailed system-design rules above are authoritative; the sketch is a high-level illustration.
+Edit the source in Excalidraw and export a new PNG when the sketch changes. The source and current preview are retained without changes in this cleanup. The detailed system-design rules and backend scoring plan above are authoritative; the retained sketches do not define the default mode or scoring lifecycle. See also the [dataset-export architecture copy](docs/get-the-picture-system-design-with-dataset-export.excalidraw).

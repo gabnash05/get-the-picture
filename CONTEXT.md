@@ -1,46 +1,66 @@
 # Domain glossary
 
+Default-mode terminology updated 4 November 2026. Team-specific terms below apply only to the separate optional mode.
+
+## Individual mode
+The default free-for-all format: one rotating drawer, one shared canvas, independently competing human guessers, a shared AI benchmark and personal scores. Drawer and guessers are not teammates.
+
+## Drawing turn
+One drawer's opportunity to depict one secret target while other eligible humans and the AI guess. It continues after the first human solve and ends when all eligible humans have solved or the deadline expires, subject to explicit abandonment rules.
+
+## Personal solve order
+The authoritative order of an individual's correct answer relative to the AI's first accepted correct answer. An AI answer accepted later does not erase that human's earlier success.
+
+## After-AI reduction
+A smaller reward for a correct human solve accepted after the AI solved. It affects that turn's earnings, not previously earned totals; numeric weights remain to be tuned.
+
+## Drawer recognition points
+The drawer's ordinary personal reward for humans correctly identifying the drawing. AI recognition and simply keeping everyone confused do not earn it.
+
+## Drawer AI bonus
+A smaller, capped reward tied to the share of eligible humans who recognized the drawing before the AI. It supplements successful human communication and does not replace ordinary drawer recognition points.
+
 ## Team
-A group of at least two human players competing together. Players agree on the number of teams and the size of each team; teams may have unequal sizes. Each round has one drawer and all remaining teammates guessing.
+In optional team mode, a group of at least two human players competing together. Team sizes may differ. Individual mode has no human teams, including no implicit team containing the whole room.
 
 ## Drawer
-The single team member assigned to draw in a round. The drawer knows the secret prompt and represents it through a sketch.
+The player assigned to draw the secret target during a drawing turn. In default individual mode the drawer competes for their own points and is not a teammate of the guessers.
 
 ## Human guesser
-Any non-drawing member of a team, who tries to identify the secret prompt from that team's evolving sketch and the official hints. Human guessers may keep submitting guesses until the team solves, forfeits or reaches the shared time limit.
+An eligible non-drawer who identifies the target from the evolving canvas and official hints. In individual mode each guesser has an independent result; their first correct answer ends only their own guessing, not the whole turn.
 
 ## AI guesser
-The transformer-powered competitor assigned to a team's drawing challenge. It tries to identify the prompt from that team's evolving sketch and the same official hints available to humans, with a limited number of guesses. Its intended gameplay difficulty is credible but beatable, with uncertain race outcomes.
+The transformer-powered competitor observing the permitted canvas and hints with a capped guess budget. Default individual play has one logical AI race for the shared drawing turn; optional team mode assigns a logical competitor per team canvas.
 
 ## Shared prompt
-The same randomly selected secret drawing target assigned to all competing teams, replaced with a fresh prompt each round.
+The secret target depicted in a drawing turn. In optional parallel team mode, all teams receive the same fresh target for that round.
 
 ## Parallel team challenges
-Simultaneous drawing-and-guessing challenges in which each team produces its own sketch of the shared prompt and its human guessers race that team's AI guesser.
+Optional team-mode races played simultaneously on private team canvases. They are not the default individual mode.
 
 ## Team canvas
-The drawing surface used by one team; opposing human players cannot see it during an active challenge.
+A private canvas belonging to one team in optional team mode. Individual mode instead uses one shared canvas visible to all room players.
 
 ## Opponent progress
-The public status of the other teams' challenges, such as still guessing or solved, without revealing their canvases or human guess text during play.
+Visible solve/AI status without disclosing the hidden answer. Default individual play shows personal progress; optional team play also shows opposing team status while hiding private canvases.
 
 ## Human solve
-A correct guess submitted by a human guesser on a team.
+A human's first correct accepted guess for a drawing turn. In individual mode it creates that player's personal result; it never solves the turn for everyone else.
 
 ## Speed points
-Points provisionally credited once to a team for its first correct human guess, based on how quickly that guess is submitted. The team can earn these points even if its AI guessed correctly earlier. They count toward the match when the round is finalized.
+Turn points based on how quickly an individual human solves. The personal before/after-AI adjustment changes that turn reward. Optional team mode instead credits one team speed result at its first human solve.
 
 ## Beat-the-AI bonus
-Additional points provisionally credited once to a team when its first correct human guess precedes its AI's correct answer. The bonus is finalized at round end; an AI guesser outage that prevents required attempts disables it for every team in that round.
+An AI-related positive score component when a human solves before the AI's accepted correct answer. Default guesser credit is personal; the drawer's separate bonus is smaller and capped. Optional team mode retains one team bonus. Required AI-service failure neutralizes default-turn AI bonuses and reductions while retaining human-only scoring.
 
 ## AI guess
-An answer proposed by an AI guesser. Its text stays hidden from human players during the active challenge and is revealed in the replay.
+An answer proposed by the AI. Actual answer text remains hidden from unsolved humans until reveal/replay. It is never a human solve or ordinary drawer-score contribution.
 
 ## AI progress
 The visible status of an AI guesser's attempt to identify the prompt, without disclosing its guess text during play.
 
 ## Replay
-The end-of-round retrospective that reveals the AI's guesses and recognition timing alongside the drawing's development.
+The retrospective revealing the drawing's development, human/AI solve timing, attempts and flags after the drawing turn ends.
 
 ## Visual strategy
 Any drawing-based way to communicate the shared prompt, subject to the prohibition of written answer clues.
@@ -55,34 +75,34 @@ The separate transformer-powered referee that publicly warns players about suspe
 Permitted writing that belongs to an object being depicted, rather than being used as a written hint to communicate the prompt.
 
 ## Referee flag
-A public warning identifying a team's suspected written-clue violation while preserving canvas privacy. It calls attention to the incident without requiring removal or imposing an automatic penalty.
+An advisory warning of a suspected written clue, with disputes resolved by players. Optional-team warnings preserve opposing-canvas privacy; flags do not automatically deduct scores.
 
 ## Referee dispute
 A disagreement about whether flagged content is a prohibited written answer clue or permitted drawing content, resolved by the players.
 
 ## Team challenge
-One team's drawing-and-guessing race within a round. It ends on that team's first correct human guess, a team forfeit, or expiry of the shared timer. Ending the challenge stops drawing and AI guessing for that team.
+In optional team mode, one team's race ending at its first correct human solve, forfeit or timeout. It is not the default individual turn-completion rule.
 
 ## Round
-The competing teams' simultaneous challenges using the same randomly selected prompt and a shared time limit. It ends when all teams have solved, forfeited or reached the time limit, followed by finalization, reveal and replay.
+A grouping of drawing turns in the match schedule; its exact UI/counting convention must be made explicit during backend planning. Optional parallel team mode uses a round for its simultaneous shared-prompt challenges. A drawing turn has its own identity and completion rule.
 
 ## Role rotation
-Drawer duty passes through the members of each team in turn after every round; all other teammates guess. The fixed match length may end partway through a rotation, so drawing-turn counts within a team need not be equal.
+In individual mode, drawer duty passes through the room players after a completed drawing turn. Optional team mode rotates drawers within each team. An individual solve alone never advances rotation.
 
 ## Match
-A contest among player-agreed teams over a player-agreed fixed number of rounds, won by the team with the highest finalized accumulated score from speed points and beat-the-AI bonuses.
+A scheduled contest won by the human with the highest finalized personal total in default individual mode. Optional team mode uses finalized team totals instead.
 
 ## AI guess budget
-The maximum number of guesses available to an AI guesser in a team challenge. Every team's AI receives the same budget; human guesses have no fixed cap.
+The maximum number of AI guesser attempts available for a drawing turn, with fixed checkpoints. Humans have no fixed guess cap. Optional parallel team challenges use equal budgets per logical AI.
 
 ## AI guess checkpoint
-A scheduled opportunity for an active AI guesser to submit a guess during a round. All teams' AIs use the same fixed checkpoint schedule.
+A scheduled opportunity to infer from a frozen permitted drawing and hint state. In default play opportunities continue after the first human solve while other eligible humans remain unsolved.
 
 ## Prompt pool
 The collection of familiar, everyday drawable concepts from which shared prompts are randomly selected. Its vocabulary follows the style of ordinary skribbl.io prompts and is intended to cover concepts the AI could reasonably recognize.
 
 ## Official hints
-Word length and letters progressively revealed during a round. Human and AI guessers receive the same hints on the same schedule across all teams.
+Word length and progressively revealed letters. Human and AI guessers receive the same permitted hint state and schedule for their drawing turn.
 
 ## Sketch-focused comparison
 A research comparison of human and AI recognition of the same incomplete sketches, separate from the party game's timed letter hints and AI guessing handicap.
@@ -109,22 +129,22 @@ Whether a guess correctly identifies the intended prompt, considered separately 
 An account of the recognized visual cue and its semantic or cultural connection to the target. It is distinct from simply naming the target correctly.
 
 ## Team format
-The player-agreed number of teams and number of human players on each team. The notation 3v2v4 describes three teams containing three, two, and four human players respectively. Equal team sizes are not required.
+An explicitly selected optional-mode arrangement such as 2v2 or 3v2v4. It is never inferred from an individual room or used as the default.
 
 ## Team solve
-The first correct guess submitted by any of a team's human guessers. It completes the team's challenge and records one provisional team result, including any eligible beat-the-AI bonus. Other teammates do not earn additional solve scores for the same prompt.
+The first teammate correct guess in optional team mode, closing that team's challenge and creating one team result. This concept must not replace per-player solves in individual mode.
 
 ## Reconnect grace
-A bounded opportunity to restore at least one eligible human guesser when a team has no active guesser. Connected teammates otherwise keep playing, and other teams and the common round clock continue.
+A bounded chance for a disconnected participant to return and synchronize. Individual solves remain personal; exact no-guesser/unresolved-player rules need an explicit default-mode policy. Optional team-mode no-guesser grace can forfeit only the affected team challenge.
 
 ## Team forfeit
-The end of an active team challenge when no eligible human guesser recovers before its reconnect grace expires. One absent member does not forfeit a team that still has an active guesser. The forfeited team earns no solve score for that challenge; other teams continue.
+An optional team-mode outcome when an active challenge has no recovered eligible human guesser before grace expires. It does not apply to all individual players when one person disconnects.
 
 ## Round finalization
-Confirmation of the round's team scores and AI-bonus eligibility, after which those results count toward the match total.
+Confirmation of the applicable turn/round results after their required records are saved. Individual totals use committed per-player results; team totals are mode-specific.
 
 ## Voided round
-A round whose competitive history cannot be verified and whose provisional scores therefore do not count. It is retried at the same match position with a fresh prompt, without advancing the drawer rotation.
+An unverifiable competitive turn/round whose provisional scores are discarded. Default play retries the same drawing-turn position and drawer with a fresh target; prior committed personal results remain.
 
 ## AI guesser unavailable
-A required AI guess that cannot be completed because of a service fault, distinguished from an incorrect answer or normal cancellation. It disables AI bonuses for all teams in the affected round while preserving human speed points.
+A required AI attempt missing because of a service fault, distinct from a wrong guess or normal cancellation. Default play uses human-only turn scoring with all AI adjustments neutralized; optional team mode removes AI bonuses across its affected round.
