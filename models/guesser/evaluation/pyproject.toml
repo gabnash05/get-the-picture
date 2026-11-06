@@ -26,6 +26,7 @@ notebook = [
     "numpy>=2.2,<3",
     "pandas>=2.3,<3",
     "pillow>=13,<14",
+    "pyarrow>=20,<27",
     "scikit-learn>=1.7,<2",
 ]
 dev = [
