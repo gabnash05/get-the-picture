@@ -91,6 +91,36 @@ uv run --project models/guesser/evaluation python -m ipykernel install --user --
 
 Then select **Python (MTMAI Guesser Evaluation)** in the notebook's kernel menu. If it is missing, repeat the registration command after syncing the environment.
 
+## Dataset pipeline notebook
+
+`01_dataset_pipeline.ipynb` calls the existing data CLI in its separate Python 3.13
+environment. Setup reads CLI defaults and `settings.py` through a read-only
+subprocess using `uv run --frozen --no-sync`; it displays profile counts, sampling
+methods, seed, and preprocessing configuration without importing the data package
+into the evaluation kernel. Prepare the data environment first when no data job
+is active. Both dependency sync and pipeline execution are disabled by default.
+
+The options cell exposes profile, data root, concurrency, candidate reserve,
+category filters, optional preview, and export directory. `None` delegates CLI
+defaults rather than copying them. Relative paths resolve from the repository
+root. Production, medium, and small are training profiles; smoke is for
+examples/probes, not the full pipeline. Filtering downloads does not remove the
+requirement for all 345 classes during preparation. Seed and preprocessing values
+are read-only here because the CLI does not expose overrides. Rerun setup after
+changing data source settings, and never sync or start a second pipeline while a
+data job is running.
+
+`02_dataset_audit.ipynb` selects production, medium, or small through `PROFILE`
+(`None` uses the data CLI default). It reads expected counts from the data package
+and rejects a mismatched dataset summary. `DATA_ROOT` and the legacy
+`MTMAI_GUESSER_DATA_ROOT` environment variable name a profile directory containing
+`prepared/`, not the parent data directory used in notebook 01. Explicit paths
+take precedence; relative overrides use the kernel working directory. A full
+split-isolation audit requires all three manifests, so a trainer-only archive
+cannot pass by itself. Keep held-out archives sealed until evaluation is frozen.
+The data CLI's export audit also checks payload integrity for the selected
+profile. Neither notebook measures recognition quality.
+
 ## Notebook workflow and merge conflicts
 
 Keep reusable Python code in `src/guesser_evaluation/`; use notebooks for imports/function calls, analysis, plots, and experiment records. The environment-check notebook demonstrates authoring with `%%writefile`: use its `module_source_path('module.py')` helper to target another module under the package root, then invalidate import caches and import/call it in a later cell. New subpackages also need `__init__.py`. Treat each `%%writefile` cell as the source of truth for its generated `.py` module: make all code changes to that module in the notebook cell, then run it to regenerate the file. Direct edits to a generated `.py` are temporary and will be overwritten the next time its writer cell runs. Give every additional module its own writer cell; the environment-check pair has a synchronization test. Commit the notebook and each resulting `.py` file as separate single-file commits so tests and terminal runs work without executing the notebook. `%autoreload 2` may help during interactive iteration. Do not keep reusable application logic only in ordinary notebook cells. Commit code/configuration and reviewed report summaries, not raw dataset files, checkpoints, or large run artifacts. The `.gitignore` covers local data, model, run, and output directories.
