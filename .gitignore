@@ -26,6 +26,11 @@
 # Build artifacts
 **/build/
 **/dist/
+**/*.egg-info/
+
+# Repository-local state and incomplete atomic outputs
+/.local/
+*.part
 
 # Local OS/editor/temp files
 .DS_Store
