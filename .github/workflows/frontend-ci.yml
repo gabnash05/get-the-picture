@@ -34,22 +34,59 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
 
       - name: Install dependencies
+        id: install_deps
         run: npm ci
 
       - name: Typecheck
+        id: typecheck
+        if: ${{ !cancelled() && steps.install_deps.outcome == 'success' }}
         run: npm run typecheck
 
       - name: Lint
+        id: lint
+        if: ${{ !cancelled() && steps.install_deps.outcome == 'success' }}
         run: npm run lint
 
       - name: Run unit tests
+        id: unit_tests
+        if: ${{ !cancelled() && steps.install_deps.outcome == 'success' }}
         run: npm test
 
       - name: Build
+        id: build
+        if: ${{ !cancelled() && steps.install_deps.outcome == 'success' }}
         run: npm run build
 
       - name: Install Chrome for browser tests
+        id: install_chrome
+        if: ${{ !cancelled() && steps.install_deps.outcome == 'success' && steps.build.outcome == 'success' }}
         run: npx playwright install --with-deps chrome
 
       - name: Run browser tests
+        id: browser_tests
+        if: ${{ !cancelled() && steps.install_chrome.outcome == 'success' }}
         run: npm run test:e2e
+
+      - name: Report check outcomes
+        if: always()
+        env:
+          INSTALL_DEPS_RESULT: ${{ steps.install_deps.outcome || 'skipped' }}
+          TYPECHECK_RESULT: ${{ steps.typecheck.outcome || 'skipped' }}
+          LINT_RESULT: ${{ steps.lint.outcome || 'skipped' }}
+          UNIT_TESTS_RESULT: ${{ steps.unit_tests.outcome || 'skipped' }}
+          BUILD_RESULT: ${{ steps.build.outcome || 'skipped' }}
+          CHROME_RESULT: ${{ steps.install_chrome.outcome || 'skipped' }}
+          BROWSER_TESTS_RESULT: ${{ steps.browser_tests.outcome || 'skipped' }}
+        run: |
+          {
+            echo "## Frontend CI report"
+            echo "| Check | Result |"
+            echo "| --- | --- |"
+            echo "| Install dependencies | $INSTALL_DEPS_RESULT |"
+            echo "| Typecheck | $TYPECHECK_RESULT |"
+            echo "| Lint | $LINT_RESULT |"
+            echo "| Unit tests | $UNIT_TESTS_RESULT |"
+            echo "| Build | $BUILD_RESULT |"
+            echo "| Install Chrome | $CHROME_RESULT |"
+            echo "| Browser tests | $BROWSER_TESTS_RESULT |"
+          } >> "$GITHUB_STEP_SUMMARY"
