@@ -16,6 +16,6 @@ Use maintained library implementations for standard deep learning tasks. Start w
 
 ## Dependencies and scope
 
-Manage Python dependencies with uv and commit pyproject.toml/uv.lock together. The data package remains usable without PyTorch or a GPU. Model dependencies belong to the model owner's environment, with the correct PyTorch/torchvision backend chosen for the actual machine before locking and syncing. Keep generated data/caches ignored; default to the checkout's .local/ and allow explicit output paths on any drive. Put weights in ignored checkpoints/.
+Manage Python dependencies with uv and keep `pyproject.toml` and `uv.lock` synchronized. The data package remains usable without PyTorch or a GPU. Model dependencies belong to the model owner's environment, with the correct PyTorch/torchvision backend chosen for the actual machine before locking and syncing. Keep generated data/caches ignored; default to the checkout's .local/ and allow explicit output paths on any drive. Put weights in ignored checkpoints/.
 
 Training must read already prepared data; it must not trigger a production download automatically. Preserve all 345 labels, original-drawing split membership, the controlled complete-only versus partial-training experiment and held-out-test custody. Do not claim that a library is installed, a model is trained or a benchmark passed merely because this policy names it.
