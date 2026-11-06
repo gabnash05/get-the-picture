@@ -18,8 +18,8 @@ Per-point timestamps determine which points exist in each training/evaluation vi
 | Backbone | timm ViT-Tiny, ImageNet pretrained, then fine-tuned on Quick, Draw! |
 | Color | Shape recognition; color is usable for preprocessing but is not an intended semantic cue |
 | Fill/background | Keep the UI tools; explicitly test and select background-aware preprocessing |
-| Data volume | Target 5,000 distinct usable original drawings per class |
-| Split | 4,000 train / 500 validation / 500 test per class, before making prefixes |
+| Data volume | Default 5,000; medium 2,000; small 500 distinct usable originals/class; all 345 labels |
+| Split | Default 4,000/500/500; medium 1,600/200/200; small 400/50/50 per class, before making prefixes |
 | New player dataset | Excluded at the user's request |
 | Updates | Approximately one recognition update per second when the visible state changes |
 | Counted guesses | Scheduled game opportunities, separate from recognition updates |
@@ -67,7 +67,7 @@ Use raw Quick, Draw! category NDJSON files. One line describes an original drawi
 
 Keep the official 345-category order. The model target is its class ID; the word, recognized flag, country, ID and timestamps do not enter the vision model as features. Valid `recognized=false` drawings remain eligible.
 
-Download the full selected category streams but retain a deterministic balanced sample. The goal is 5,000 eligible originals per class, not all 50 million originals for training.
+Choose one balanced training profile: production (default, 5,000 eligible originals/class), medium (2,000/class), or small (500/class). All keep 345 categories. Production samples full category streams; medium/small read source prefixes only and stop after collecting their reserve. These sizes are not model batch sizes, and their recognition accuracy remains unmeasured.
 
 ## 4. Download and local environment
 
@@ -82,15 +82,23 @@ Run the [data README setup](../../models/guesser/data/README.md), then:
 .\guesser-data.ps1 export
 ```
 
-The model teammate performs the eventual full-source download. Missing inventory is fetched automatically; generation, byte-count and MD5 checks protect completion. The dated bundled inventory totals approximately 181.43 GiB. Raw files are streamed, not retained in full. Two streams run by default; peak RAM/disk and throughput remain unmeasured at production scale.
+Choose `--profile medium` or `--profile small` on each of the four commands above to download less and prepare a smaller training dataset. Omitting it preserves production. Real defaults remain in Python settings.
 
-Keep 5,500 candidate IDs/class using the smallest `select-v1` SHA-256 priorities with seed 198173 and string-ID tie-breaks. Matching completed classes resume; incomplete classes restart from the beginning. No download-budget ledger, per-source database, automatic conflict re-download or code/document freeze is required.
+| Profile | Reserve/category | Train/category | Validation/category | Test/category | Final total |
+|---|---:|---:|---:|---:|---:|
+| `production` (default) | 5,500 | 4,000 | 500 | 500 | 1,725,000 |
+| `medium` | 2,200 | 1,600 | 200 | 200 | 690,000 |
+| `small` | 550 | 400 | 50 | 50 | 172,500 |
+
+The model teammate performs the eventual download. Missing inventory is fetched automatically. Production pins generations and verifies full byte counts/MD5; its dated bundled inventory totals approximately 181.43 GiB. Medium/small pin generations, record consumed bytes and candidate hashes, and explicitly mark sources partial without claiming whole-file verification. They sample source beginnings, so they can be less representative than full-source sampling. Raw files are streamed, not retained in full. Two streams run by default; peak RAM/disk, actual partial-download sizes and throughput remain to be measured.
+
+Production keeps 5,500 candidate IDs/class using the smallest `select-v1` SHA-256 priorities with seed 198173 and string-ID tie-breaks. Medium and small collect the first 2,200 and 550 distinct cleaned IDs/class, then rank those candidates with the same hash. Malformed/repeated-ID records do not add slots. Each profile has its own `.local/data/<profile>/` folder, summaries and archives. Matching completed classes resume; incomplete classes restart from the beginning. No download-budget ledger, per-source database, automatic conflict re-download or code/document freeze is required.
 
 ## 5. Cleaning and retained-candidate conflicts
 
 Cleaning occurs during `01-download.py`. Preserve stroke order, pauses, valid dots, nonzero starting times and valid unrecognized records. Remove empty strokes and exact repeated x/y/time triples. Reject malformed arrays, unsafe/nonfinite coordinates, invalid chronology, no full-drawing extent and zero duration. Normalize signed zero and keep IDs as strings.
 
-Only retained candidates receive ID conflict tracking. Conflicting retained IDs keep their ranked slot until streaming ends, preventing order-dependent replacement. Preparation uses one temporary SQLite index for retained identities, content/trajectory hashes and candidate offsets; it does not store another full JSON copy.
+Only retained candidates receive ID conflict tracking. Conflicting retained IDs keep their ranked slot until the inspected stream ends, preventing order-dependent replacement within that inspected input. Preparation uses one temporary SQLite index for retained identities, content/trajectory hashes and candidate offsets; it does not store another full JSON copy.
 
 Quarantine retained ID/content/label conflicts and cross-label identical full trajectories; never relabel automatically. Same-label exact trajectory duplicates keep a deterministic best representative. This does not claim to discover conflicts involving discarded source records.
 
@@ -98,7 +106,7 @@ Optional manual exclusions are one ID per line in `excluded-ids.txt`. Per-class 
 
 ## 6. Split original drawings, then generate views
 
-Select 5,000 eligible originals/class, sort by the separate `split-v1` hash and ID, then assign exactly 4,000 train / 500 validation / 500 test. Across 345 categories this is 1,380,000 / 172,500 / 172,500 originals. Every view of an original remains in its partition.
+Select the chosen profile's eligible originals/class, sort by the separate `split-v1` hash and ID, then assign its exact training/validation/test counts from the table above. Production totals are 1,380,000 / 172,500 / 172,500 originals; medium totals are 552,000 / 69,000 / 69,000; small totals are 138,000 / 17,250 / 17,250. Every view of an original remains in its partition. Smaller profiles are marked trainable; the example/probe smoke profile remains nonproduction. Use the same frozen profile for both compared models; different profiles have different held-out originals and their scores alone do not form a controlled dataset-size comparison.
 
 Write uncompressed seekable UTF-8 JSONL under `prepared/records/{split}/` and Parquet indexes under `prepared/manifests/`. Manifests retain identity, class, split, record path, byte offset/length, timing, recognized flag, quality counts and trajectory hash. No selected/staging-selected copies are required.
 
@@ -189,7 +197,7 @@ Run a small overfit check and an all-345-class smoke set before the full experim
 
 Time a representative training interval, including rendering/loading, before committing to six epochs. If the ceiling exceeds the available time, fix an equal step budget for A and B in advance, keep balanced sampling across **all 345** classes, and report the actual budget. Do not quietly remove difficult categories.
 
-Data can produce the smoke package while the full source scan runs. The baseline and adapted run can use separate laptops; final serving uses one frozen model, not a three-laptop distributed inference requirement.
+Data can prepare the small or medium trainable package first. The smoke example remains only a pipeline example; it is not the all-345-category training dataset. The baseline and adapted run can use separate laptops; final serving uses one frozen model, not a three-laptop distributed inference requirement.
 
 ## 10. Validation and final testing
 
@@ -197,21 +205,21 @@ Data can produce the smoke package while the full source scan runs. The baseline
 
 Use validation for architecture/preprocessor pilots, epoch selection, temperature calibration and pass thresholds. Once these are frozen, run the chosen model and the fixed baseline on the final test. Do not retune after seeing test errors and still describe that same test as untouched.
 
-For fast epoch selection, use a deterministic validation subset such as 50 originals/class. Use the full 500/class validation set for final validation/calibration and the full held-out 500/class test set once. Generate views on demand or cache a bounded number of shards, rather than writing millions of small image files.
+For fast epoch selection, use a deterministic validation subset such as 50 originals/class (all validation originals for small). Use the selected profile's full validation set for final validation/calibration and its full held-out test set once: 500/class for production, 200/class for medium, 50/class for small. Generate views on demand or cache a bounded number of shards, rather than writing millions of small image files.
 
 ### Detailed model-validation procedure
 
 The Validation & Inference owner leads this procedure with the model owner's frozen checkpoints. Validation is an offline recognition-quality task; the latency/load protocol below is a separate runtime task.
 
-1. **Audit inputs before scoring.** Confirm train/validation/test ID and trajectory-hash disjointness, all 345 labels, and exactly 500 validation originals per class. Validate timestamp cuts and current-prefix-only crop bounds. A manifest/parser failure must be fixed and counted, not silently omitted from the denominator.
-2. **Build identical held-out views.** Each original produces ten fixed time prefixes: 10% through 100%. Full validation therefore has 172,500 originals and 1,725,000 views per model pass. A fixed 50-per-class subset has 17,250 originals and 172,500 views for fast epoch checks. Preserve this same subset, view recipe and image hashes across A and B.
+1. **Audit inputs before scoring.** Confirm train/validation/test ID and trajectory-hash disjointness, all 345 labels, and exactly the selected profile's validation originals per class (500 production, 200 medium, 50 small). Validate timestamp cuts and current-prefix-only crop bounds. A manifest/parser failure must be fixed and counted, not silently omitted from the denominator.
+2. **Build identical held-out views.** Each original produces ten fixed time prefixes: 10% through 100%. Full production validation has 172,500 originals and 1,725,000 views per model pass; medium has 69,000 originals / 690,000 views, and small has 17,250 originals / 172,500 views. A fixed 50-per-class subset has 17,250 originals and 172,500 views for fast epoch checks. Preserve this same subset, view recipe and image hashes across A and B.
 3. **Run evaluation mode.** Use `model.eval()` and `torch.inference_mode()`, with no optimizer step, stochastic training augmentation or training-time dropout. Run A and B against the same inputs, output registry and scoring code.
 4. **Write one offline result row per view.** Include drawing ID, true class ID, time fraction/cutoff, input hash, checkpoint identity, preprocessor version, raw top-k logits/IDs, blank status and any passing-policy result. The true label is available only to the offline evaluator; it never enters the live inference request.
 5. **Inspect learning after each epoch.** Record training loss, validation cross-entropy on nonblank evaluable images, and the early-recognition score. Keep blank stages visible in end-to-end recognition metrics. If training improves while validation quality declines, inspect overfitting and use the best validation checkpoint rather than the latest weights. Keep the same checkpoint-selection rule and patience for A and B.
 6. **Evaluate full validation before final selection.** Report all ten stage accuracies, mean early accuracy, complete-image top-1/top-3, per-class support/confusions and uncertainty grouped by original drawing. Compare candidates with the equal-budget rule from Section 9.
 7. **Calibrate passing on validation only.** Fit any scalar temperature using validation logits and intended labels with model weights fixed. Sweep candidate confidence thresholds, for example 0.00–0.95 in 0.05 increments, and record the resulting accuracy/coverage tradeoff. A finer sweep is allowed on validation, never on test. Keep blank/preprocessing-uncertain passes deterministic.
 8. **Freeze and record the decision.** Save weights/hash, labels/hash, preprocessor, calibration, pass threshold, public-hint policy and selection rationale. If hint filtering is used, assess it separately; a hint-normalized score must not be presented as visual confidence.
-9. **Run final testing on different originals.** Only after freezing, evaluate A and the chosen candidate on the 172,500 final-test originals and the fixed ten-stage grid. Report the fixed protocol even if the results are disappointing. Changing a candidate after studying test errors means the original untouched-test claim no longer applies.
+9. **Run final testing on different originals.** Only after freezing, evaluate A and the chosen candidate on the selected profile's final-test originals (172,500 production, 69,000 medium, 17,250 small) and the fixed ten-stage grid. Report the fixed protocol even if the results are disappointing. Changing a candidate after studying test errors means the original untouched-test claim no longer applies.
 
 #### Metric definitions and denominators
 

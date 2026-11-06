@@ -23,7 +23,7 @@ The data/model experiment remains unchanged: all 345 Quick, Draw! classes, origi
 
 ## Implemented data tooling
 
-The [Guesser data package](../../models/guesser/data/README.md) uses Python 3.13 and uv with six literal numbered stages: download, prepare, optional preview, export, loader and image creation. Real defaults live in Python settings. There are no approval CSVs, sign-offs, code/document fingerprints, freeze step or global download budget. See the [current runbook](../../models/guesser/data/RUNBOOK.md).
+The [Guesser data package](../../models/guesser/data/README.md) uses Python 3.13 and uv with six literal numbered stages: download, prepare, optional preview, export, loader and image creation. Real defaults live in Python settings. Production remains the full-source default; medium and small stop after collecting prefix reserves and prepare 2,000 and 500 originals/class, respectively, while preserving all 345 labels. There are no approval CSVs, sign-offs, code/document fingerprints, freeze step or global download budget. See the [current runbook](../../models/guesser/data/RUNBOOK.md).
 
 The [evaluation scaffold](../../models/guesser/evaluation/README.md) is now in the agreed model layout and keeps its separate Python 3.12 lock. Model batching, evaluation metrics and the inference service remain future work. Historical data reports/ZIPs are retained as historical evidence rather than rebuilt by this refactor.
 

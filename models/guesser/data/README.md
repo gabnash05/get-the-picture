@@ -51,17 +51,38 @@ Load:    05 read one drawing -> 06 cut -> render -> preprocess -> one image + cl
 .\guesser-data.ps1 export
 ```
 
-`download` is an explicit full-source operation: it reads the category files, not just the retained rows. It resumes matching completed categories and restarts incomplete ones. Production retains initially 5,500 candidates/class, then selects 5,000 distinct originals/class: 4,000 training, 500 validation and 500 test. For all 345 labels those are 1,380,000 / 172,500 / 172,500 originals.
+### Choose a dataset size
 
-Source checks use generation, byte count and MD5. The in-memory sample tracks conflicts only for retained IDs. Preparation uses one temporary SQLite index for retained candidates; conflicts are quarantined rather than relabeled. It writes directly to prepared shards and removes its temporary index. Candidates stay available for re-preparation. Historical generated folders are not automatically deleted.
+All three training profiles keep all 345 categories. Counts below are original drawings, before timed images are generated.
+
+| Profile | Reserve/category | Train/category | Validation/category | Test/category | Final total |
+|---|---:|---:|---:|---:|---:|
+| `production` (default) | 5,500 | 4,000 | 500 | 500 | 1,725,000 |
+| `medium` | 2,200 | 1,600 | 200 | 200 | 690,000 |
+| `small` | 550 | 400 | 50 | 50 | 172,500 |
+
+Omitting `--profile` keeps `production`. To download less and train on a smaller dataset, use the same profile for each command:
+
+```powershell
+.\guesser-data.ps1 download --profile medium
+.\guesser-data.ps1 prepare --profile medium
+.\guesser-data.ps1 preview --profile medium   # optional
+.\guesser-data.ps1 export --profile medium
+```
+
+Replace `medium` with `small` for the smallest training dataset. Each size has its own `.local/data/<profile>/` folder and profile-named archives. Command results show the profile and target counts. `--candidates` can explicitly enlarge that profile's reserve.
+
+Production reads each selected category file completely and keeps a hash-ranked sample. Medium and small read only the beginning of each category, cleaning until their reserve contains enough distinct IDs, then close the stream. They rank the collected candidates with the same seed. These prefix samples save transfer time but can be less representative of the complete source; drawing sizes vary, so exact downloaded GiB is not fixed. Both support fine-tuning experiments, but accuracy must be measured. They are training profiles; `smoke` remains only for examples/probes.
+
+Production source checks use generation, byte count and whole-file MD5. Smaller profiles pin the generation and record consumed bytes plus candidate hashes; their receipts explicitly say the source is partial and not whole-file verified. Matching completed samples resume; incomplete categories restart. The in-memory sample tracks conflicts only for retained IDs. Preparation uses one temporary SQLite index for retained candidates; conflicts are quarantined rather than relabeled. It writes directly to prepared shards and removes its temporary index. Candidates stay available for re-preparation. Historical generated folders are not automatically deleted.
 
 Optional drawing exclusions go in `<data-root>/<profile>/excluded-ids.txt`, one ID per line. Legacy explicit exclusions are adopted when no text file exists. No review approval is required.
 
 If preparation reports a shortage, explicitly enlarge the affected reserve, then prepare again:
 
 ```powershell
-.\guesser-data.ps1 download --class "cat" --candidates 6500
-.\guesser-data.ps1 prepare
+.\guesser-data.ps1 download --profile medium --class "cat" --candidates 3200
+.\guesser-data.ps1 prepare --profile medium
 ```
 
 See [the runbook](RUNBOOK.md) for transfer, loading and preprocessing examples.
@@ -83,11 +104,13 @@ Other commands: `preflight`, `status`, `inventory`, and `audit`. Every command s
 from guesser_data import IndexedDrawings
 from guesser_data import preprocess
 
-with IndexedDrawings("prepared", "train") as drawings:
+with IndexedDrawings(".local/data/medium/prepared", "train") as drawings:
     sample = drawings.training_image(0, epoch=0)  # foreground is the default
     # sample['image']: float32 [3,224,224] when status == 'ok'
     # sample['class_id']: separate training target
 ```
+
+Choose `.local/data/production/prepared`, `.local/data/medium/prepared` or `.local/data/small/prepared` to match your experiment. After extracting an export, use its `prepared/` directory instead. A dataset size is independent of the future model DataLoader batch size; use one frozen dataset and split package consistently within each experiment. Results from different profiles use different held-out originals and are not a controlled size comparison.
 
 Use `candidate="edges"` to toggle edge preprocessing. Keep the same choice across a model's training, validation, test and inference. Both modes fit/pad the current visible shape to 224x224 and normalize by mean/std 0.5; do not normalize twice. Timestamps create partial images; they are not direct ViT input features. Training views are 20% complete and otherwise use an elapsed-time cut in 10%-90%. Evaluation emits ten fixed 10%-100% stages, including blank, uncertain and unchanged outcomes. Crop bounds never use future points.
 

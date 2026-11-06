@@ -80,6 +80,7 @@ def parser() -> argparse.ArgumentParser:
             "--profile",
             choices=tuple(PROFILES),
             default="smoke" if name in ("probe", "example") else "production",
+            help="Dataset size: production, medium or small; smoke is for examples/probes",
         )
         command.add_argument(
             "--json", action="store_true", help="Print the result as JSON"
@@ -191,7 +192,10 @@ def dispatch(args: argparse.Namespace) -> dict:
             }
         if args.command == "download":
             ids = _class_ids(args.classes)
-            print("Downloading and sampling selected categories...", file=sys.stderr)
+            print(
+                f"Downloading {settings.profile} ({settings.download_method})...",
+                file=sys.stderr,
+            )
             result = download.download(
                 settings,
                 class_ids=ids,
@@ -249,7 +253,15 @@ def main(argv: list[str] | None = None) -> int:
             )
         args = parser().parse_args(arguments)
         configure_local_storage()
-        result = dispatch(args)
+        settings = Settings(args.data_root, args.profile)
+        targets = settings.spec
+        if args.command == "download" and args.candidates is not None:
+            targets["candidates"] = args.candidates
+        result = {
+            "profile": settings.profile,
+            "targets_per_category": targets,
+            **dispatch(args),
+        }
     except (DataError, OSError, ValueError, KeyError) as exc:
         message = {
             "code": getattr(exc, "code", "operation_failed"),

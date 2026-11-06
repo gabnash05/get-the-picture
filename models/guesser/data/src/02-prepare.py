@@ -28,34 +28,71 @@ trajectory_hash = _download.trajectory_hash
 verify_receipt = _download.verify_receipt
 
 
-def _classes(settings):
-    all_labels = labels(settings)
-    present = [
-        x for x in all_labels if candidate_path(settings, x["class_id"]).exists()
-    ]
-    if settings.profile == "production":
+def _validate_registry(settings, all_labels, present):
+    if settings.is_trainable:
         names = (
             (PACKAGE_ROOT / "src" / "resources" / "categories.txt")
             .read_text(encoding="utf-8")
             .splitlines()
         )
         if (
-            any(type(x.get("class_id")) is not int for x in all_labels)
+            len(names) != 345
+            or any(type(x.get("class_id")) is not int for x in all_labels)
             or all_labels
             != [{"class_id": i, "source_name": name} for i, name in enumerate(names)]
-            or len(names) != 345
         ):
             raise DataError(
-                "Production labels do not match official category order",
-                "invalid_registry",
+                "Labels do not match official category order", "invalid_registry"
             )
-    if settings.profile == "production" and (
-        len({x["source_name"] for x in all_labels}) != 345 or len(present) != 345
-    ):
-        raise DataError("Production requires all 345 classes", "incomplete_classes")
+        if len(present) != 345:
+            raise DataError(
+                "Trainable profiles require all 345 classes", "incomplete_classes"
+            )
     if not present:
         raise DataError("No candidates available", "missing_candidates")
+
+
+def _classes(settings):
+    all_labels = labels(settings)
+    present = [
+        x for x in all_labels if candidate_path(settings, x["class_id"]).exists()
+    ]
+    _validate_registry(settings, all_labels, present)
     return present
+
+
+def _validate_sources(settings, classes, receipts, *, summary=False):
+    if not settings.is_trainable:
+        return
+    for item in classes:
+        receipt = receipts.get(item["class_id"], {})
+        if receipt.get("source_name") != item["source_name"]:
+            raise DataError("Source class mismatch", "unverified_source")
+        if settings.download_method == "full_source":
+            valid = receipt.get("source_kind") == "quickdraw" and (
+                (
+                    summary
+                    and "complete" not in receipt
+                    and "full_source_verified" not in receipt
+                )
+                or (
+                    receipt.get("complete") is True
+                    and receipt.get("full_source_verified") is True
+                )
+            )
+        else:
+            valid = (
+                receipt.get("source_kind") == "quickdraw_partial"
+                and receipt.get("profile") == settings.profile
+                and receipt.get("sampling_method") == "prefix-v1"
+                and receipt.get("complete") is False
+                and receipt.get("full_source_verified") is False
+                and receipt.get("source_md5") is None
+                and type(receipt.get("source_bytes")) is int
+                and receipt["source_bytes"] > 0
+            )
+        if not valid:
+            raise DataError("Source does not match profile policy", "unverified_source")
 
 
 def _verified_receipts(settings, classes):
@@ -65,20 +102,19 @@ def _verified_receipts(settings, classes):
         item["class_id"]: verify_receipt(settings, metadata.get(item["class_id"], item))
         for item in classes
     }
-    if settings.profile == "production" and any(
-        receipt.get("source_kind") != "quickdraw"
-        or not receipt.get("complete")
-        or not receipt.get("full_source_verified")
-        for receipt in receipts.values()
-    ):
-        raise DataError(
-            "Production requires verified QuickDraw sources", "unverified_source"
-        )
+    _validate_sources(settings, classes, receipts)
     return receipts
 
 
 def _summary(
-    settings, classes, receipts, counts, statistics, record_hashes, manifest_hashes
+    settings,
+    classes,
+    receipts,
+    counts,
+    statistics,
+    record_hashes,
+    manifest_hashes,
+    registry=None,
 ):
     kinds = sorted(
         {receipt.get("source_kind", "unknown") for receipt in receipts.values()}
@@ -87,9 +123,9 @@ def _summary(
         "version": 1,
         "profile": settings.profile,
         "data_kind": kinds[0] if len(kinds) == 1 else "mixed",
-        "trainable": settings.profile == "production",
+        "trainable": settings.is_trainable,
         "seed": settings.seed,
-        "labels": labels(settings),
+        "labels": labels(settings) if registry is None else registry,
         "counts": {str(key): value for key, value in counts.items()},
         "sources": [
             {
@@ -104,6 +140,10 @@ def _summary(
                     "candidate_sha256",
                     "candidate_count",
                     "keep",
+                ) + (
+                    ("profile", "sampling_method", "complete", "full_source_verified")
+                    if settings.download_method == "prefix"
+                    else ()
                 )
             }
             for receipt in receipts.values()
@@ -267,7 +307,8 @@ def prepare(settings: Settings) -> dict:
             )
         if shortage:
             hint = "; ".join(
-                f"download --class {json.dumps(item['source_name'])} --candidates {item['required_keep']}"
+                f"download --profile {settings.profile} --class "
+                f"{json.dumps(item['source_name'])} --candidates {item['required_keep']}"
                 for item in shortage
             )
             raise DataError(

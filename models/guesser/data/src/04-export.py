@@ -15,7 +15,6 @@ from .common import (
     json_bytes,
     load_step,
     read_json,
-    receipt_path,
 )
 from .settings import PACKAGE_ROOT, Settings
 
@@ -27,6 +26,9 @@ trajectory_hash = _download.trajectory_hash
 _prepare = load_step("02-prepare")
 _classes = _prepare._classes
 _summary = _prepare._summary
+_validate_registry = _prepare._validate_registry
+_validate_sources = _prepare._validate_sources
+_verified_receipts = _prepare._verified_receipts
 
 
 def read_indexed(prepared: str | Path, row: dict) -> dict:
@@ -66,18 +68,22 @@ def _audit_impl(settings, connection):
     existing_summary = read_json(summary_path) if summary_path.exists() else None
     if existing_summary is None:
         available_classes = _classes(settings)
-        receipts = {
-            item["class_id"]: read_json(receipt_path(settings, item["class_id"]))
-            for item in available_classes
-        }
+        receipts = _verified_receipts(settings, available_classes)
     else:
         class_ids = {int(key) for key in existing_summary["counts"]}
         available_classes = [
             item for item in existing_summary["labels"] if item["class_id"] in class_ids
         ]
         receipts = {item["class_id"]: item for item in existing_summary["sources"]}
-        if set(receipts) != class_ids or len(available_classes) != len(class_ids):
-            raise DataError("Dataset summary class mismatch", "audit_failed")
+        if (
+            existing_summary.get("profile") != settings.profile
+            or existing_summary.get("trainable") is not settings.is_trainable
+            or set(receipts) != class_ids
+            or len(available_classes) != len(class_ids)
+        ):
+            raise DataError("Dataset summary class or profile mismatch", "audit_failed")
+        _validate_registry(settings, existing_summary["labels"], available_classes)
+        _validate_sources(settings, available_classes, receipts, summary=True)
     classes = {x["class_id"]: x for x in available_classes}
     offsets = {}
     record_digests = {}
@@ -183,6 +189,7 @@ def _audit_impl(settings, connection):
         timing,
         {relative: digest.hexdigest() for relative, digest in record_digests.items()},
         hashes,
+        registry=existing_summary["labels"] if existing_summary is not None else None,
     )
     if existing_summary is not None and existing_summary != summary:
         raise DataError("Dataset summary mismatch", "audit_failed")

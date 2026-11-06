@@ -3,14 +3,18 @@ import hashlib
 import zipfile
 from unittest.mock import patch
 
-from guesser_data.common import atomic_json, json_bytes, load_step, object_hash
-from guesser_data.settings import Settings
+import pytest
+
+from guesser_data.cli import parser
+from guesser_data.common import DataError, atomic_json, json_bytes, load_step, object_hash
+from guesser_data.settings import PACKAGE_ROOT, Settings
 
 _download = load_step("01-download")
 trajectory_hash = _download.trajectory_hash
 sample_full_stream = _download.sample_full_stream
 save_candidates = _download.save_candidates
-prepare = load_step("02-prepare").prepare
+_prepare = load_step("02-prepare")
+prepare = _prepare.prepare
 export_module = load_step("04-export")
 export_dataset = export_module.export_dataset
 
@@ -75,3 +79,79 @@ def test_prepare_and_export_small_dataset(tmp_path):
         )
     with zipfile.ZipFile(archives["held-out-test"]["path"]) as archive:
         assert "prepared/manifests/test.parquet" in archive.namelist()
+
+
+def test_trainable_profile_helpers(tmp_path, monkeypatch):
+    expected = {
+        "production": (5500, 4000, 500, 500),
+        "medium": (2200, 1600, 200, 200),
+        "small": (550, 400, 50, 50),
+    }
+    for profile, values in expected.items():
+        settings = Settings(tmp_path, profile=profile)
+        assert settings.base == tmp_path / profile
+        keys = ("candidates", "train", "validation", "test")
+        assert tuple(settings.spec[key] for key in keys) == values
+        assert parser().parse_args(["status", "--profile", profile]).profile == profile
+    assert parser().parse_args(["status"]).profile == "production"
+    assert parser().parse_args(["probe"]).profile == "smoke"
+    with pytest.raises(DataError):
+        parser().parse_args(["status", "--profile", "unknown"])
+
+    names = (PACKAGE_ROOT / "src" / "resources" / "categories.txt").read_text(
+        encoding="utf-8"
+    ).splitlines()
+    registry = [{"class_id": i, "source_name": name} for i, name in enumerate(names)]
+    production = Settings(tmp_path, profile="production")
+    medium = Settings(tmp_path, profile="medium")
+    _prepare._validate_registry(production, registry, registry)
+    with pytest.raises(DataError):
+        _prepare._validate_registry(medium, registry[::-1], registry)
+    with pytest.raises(DataError):
+        _prepare._validate_registry(medium, registry, registry[:-1])
+
+    item = registry[0]
+    partial = {
+        **item,
+        "source_kind": "quickdraw_partial",
+        "profile": "medium",
+        "sampling_method": "prefix-v1",
+        "complete": False,
+        "full_source_verified": False,
+        "source_bytes": 123,
+        "source_md5": None,
+    }
+    full = {
+        **item,
+        "source_kind": "quickdraw",
+        "complete": True,
+        "full_source_verified": True,
+    }
+    _prepare._validate_sources(medium, [item], {0: partial})
+    _prepare._validate_sources(production, [item], {0: full})
+    with pytest.raises(DataError):
+        _prepare._validate_sources(production, [item], {0: partial})
+    with pytest.raises(DataError):
+        _prepare._validate_sources(medium, [item], {0: full})
+
+    monkeypatch.setattr(_prepare, "labels", lambda settings: registry)
+    partial_summary = _prepare._summary(medium, [item], {0: partial}, {}, {}, {}, {})
+    assert partial_summary["trainable"] is True
+    provenance = ("profile", "sampling_method", "complete", "full_source_verified")
+    assert {key: partial_summary["sources"][0][key] for key in provenance} == {
+        key: partial[key] for key in provenance
+    }
+    production_summary = _prepare._summary(
+        production, [item], {0: full}, {}, {}, {}, {}
+    )
+    assert set(production_summary["sources"][0]) == {
+        "class_id",
+        "source_name",
+        "source_kind",
+        "source_generation",
+        "source_bytes",
+        "source_md5",
+        "candidate_sha256",
+        "candidate_count",
+        "keep",
+    }

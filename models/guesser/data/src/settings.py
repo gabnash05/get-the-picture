@@ -14,7 +14,16 @@ CONCURRENCY = 2
 DEFAULT_PREPROCESSOR = "foreground"
 PROFILES = {
     "production": {"candidates": 5500, "train": 4000, "validation": 500, "test": 500},
+    "medium": {"candidates": 2200, "train": 1600, "validation": 200, "test": 200},
+    "small": {"candidates": 550, "train": 400, "validation": 50, "test": 50},
     "smoke": {"candidates": 30, "train": 16, "validation": 2, "test": 2},
+}
+TRAINABLE_PROFILES = ("production", "medium", "small")
+DOWNLOAD_METHODS = {
+    "production": "full_source",
+    "medium": "prefix",
+    "small": "prefix",
+    "smoke": "probe",
 }
 PREPROCESS_DEFAULTS = {
     "working_size": 512,
@@ -54,6 +63,14 @@ class Settings:
         object.__setattr__(self, "data_root", Path(self.data_root).resolve())
         if self.profile not in PROFILES:
             raise ValueError(f"Unknown data profile: {self.profile}")
+
+    @property
+    def is_trainable(self) -> bool:
+        return self.profile in TRAINABLE_PROFILES
+
+    @property
+    def download_method(self) -> str:
+        return DOWNLOAD_METHODS[self.profile]
 
     @property
     def base(self) -> Path:

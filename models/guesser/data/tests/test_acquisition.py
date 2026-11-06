@@ -67,3 +67,41 @@ def test_receipt_checksum_and_resume(tmp_path):
     candidate_path(settings, 0).write_bytes(b"tampered")
     with pytest.raises(DataError):
         verify_receipt(settings, meta)
+
+
+def test_partial_stops_after_distinct_cleaned_ids(tmp_path):
+    settings = Settings(tmp_path, "small")
+    records = [_record("a", 2), _record("a", 3), {"bad": 1}, _record("b", 4)]
+    lines, meta = _source(records + [_record("c", 5)])
+
+    def bounded():
+        yield from lines[:4]
+        raise AssertionError("read beyond reserve")
+
+    rows, stats = source.sample_partial_stream(bounded(), meta, settings, keep=2)
+    assert {row["drawing_id"] for row in rows} == {"a", "b"}
+    assert next(row for row in rows if row["drawing_id"] == "a")["id_conflict"]
+    assert stats["source_bytes"] == sum(map(len, lines[:4]))
+    assert stats["source_md5"] is None
+
+
+def test_partial_receipt_evidence_and_resume(tmp_path):
+    settings = Settings(tmp_path, "small")
+    lines, meta = _source([_record("a", 2), _record("b", 3)])
+    rows, stats = source.sample_partial_stream(lines, meta, settings, keep=2)
+    saved = save_candidates(settings, meta, rows, stats, "quickdraw_partial", False, 2)
+    assert source._cached(settings, meta, 1, "quickdraw_partial", False)
+    assert not source._cached(settings, meta, 3, "quickdraw_partial", False)
+    assert verify_receipt(settings, meta) == saved
+    for changed in ({"generation": "changed"},):
+        with pytest.raises(DataError):
+            verify_receipt(settings, {**meta, **changed})
+    for key, value in (("profile", "medium"), ("sampling_method", "other")):
+        altered = {**saved, key: value}
+        receipt_path(settings, 0).write_text(json.dumps(altered), encoding="utf-8")
+        with pytest.raises(DataError):
+            verify_receipt(settings, meta)
+    receipt_path(settings, 0).write_text(json.dumps(saved), encoding="utf-8")
+    candidate_path(settings, 0).write_bytes(b"tampered")
+    with pytest.raises(DataError):
+        verify_receipt(settings, meta)

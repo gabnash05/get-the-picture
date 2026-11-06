@@ -200,7 +200,7 @@ class _ReverseId(str):
         return str.__gt__(self, other)
 
 
-def _consume_lines(lines, meta, settings, keep, *, full):
+def _consume_lines(lines, meta, settings, keep, *, full, stop_at_keep=False):
     if isinstance(keep, bool) or not isinstance(keep, int) or keep < 1:
         raise DataError("Invalid candidate count", "invalid_candidates")
     heap = []
@@ -209,6 +209,8 @@ def _consume_lines(lines, meta, settings, keep, *, full):
     md5 = hashlib.md5()
     size = 0
     for line in lines:
+        if stop_at_keep and not line.endswith(b"\n"):
+            break
         size += len(line)
         md5.update(line)
         counts["source_lines"] += 1
@@ -254,6 +256,8 @@ def _consume_lines(lines, meta, settings, keep, *, full):
             "id_conflict": False,
             "record": record,
         }
+        if stop_at_keep and len(retained) == keep:
+            break
     digest = base64.b64encode(md5.digest()).decode("ascii")
     if full:
         if size != int(meta["size"]):
@@ -279,6 +283,20 @@ def sample_full_stream(
         keep if keep is not None else settings.spec["candidates"],
         full=True,
     )
+
+
+def sample_partial_stream(
+    lines: Iterable[bytes], meta: dict, settings: Settings, keep: int | None = None
+) -> tuple[list[dict], dict]:
+    """Sample the first requested number of distinct cleaned source IDs."""
+    keep = settings.spec["candidates"] if keep is None else keep
+    rows, stats = _consume_lines(
+        lines, meta, settings, keep, full=False, stop_at_keep=True
+    )
+    if len(rows) != keep:
+        raise DataError("Insufficient eligible records", "insufficient_candidates")
+    stats["source_md5"] = None
+    return rows, stats
 
 
 def save_candidates(
@@ -309,6 +327,8 @@ def save_candidates(
         "candidate_sha256": digest,
         "candidate_file": path.relative_to(settings.base).as_posix(),
     }
+    if source_kind == "quickdraw_partial":
+        result.update(profile=settings.profile, sampling_method="prefix-v1")
     atomic_json(receipt_path(settings, meta["class_id"]), result)
     return result
 
@@ -356,6 +376,22 @@ def verify_receipt(settings: Settings, meta: dict) -> dict:
                 or len(rows) != keep
             ):
                 raise ValueError("Source evidence mismatch")
+        elif receipt.get("source_kind") == "quickdraw_partial":
+            if (
+                settings.download_method != "prefix"
+                or receipt.get("profile") != settings.profile
+                or receipt.get("sampling_method") != "prefix-v1"
+                or receipt.get("complete") is not False
+                or receipt.get("full_source_verified") is not False
+                or receipt.get("source_generation") != meta.get("generation")
+                or not isinstance(receipt.get("source_bytes"), int)
+                or isinstance(receipt.get("source_bytes"), bool)
+                or receipt["source_bytes"] < 1
+                or receipt["source_bytes"] > int(meta["size"])
+                or receipt.get("source_md5") is not None
+                or len(rows) != keep
+            ):
+                raise ValueError("Partial source evidence mismatch")
         elif receipt.get("full_source_verified"):
             raise ValueError("Invalid full source evidence")
         return receipt
@@ -533,8 +569,8 @@ def download(
     concurrency: int = CONCURRENCY,
 ) -> dict:
     """Download selected generation-pinned classes, resuming verified receipts."""
-    if settings.profile != "production":
-        raise DataError("Full download requires production profile", "invalid_profile")
+    if not settings.is_trainable:
+        raise DataError("Download requires a trainable profile", "invalid_profile")
     if not 1 <= concurrency <= 3:
         raise DataError("Invalid concurrency", "invalid_concurrency")
     keep = settings.spec["candidates"] if candidates is None else candidates
@@ -559,12 +595,15 @@ def download(
     if requested is not None and len(selected) != len(requested):
         raise DataError("Unknown class ID", "invalid_class")
 
+    partial = settings.download_method == "prefix"
+    kind = "quickdraw_partial" if partial else "quickdraw"
+
     def download_class(meta):
         try:
             receipt = verify_receipt(settings, meta)
             if (
-                receipt.get("source_kind") == "quickdraw"
-                and receipt.get("complete") is True
+                receipt.get("source_kind") == kind
+                and receipt.get("complete") is (not partial)
                 and receipt.get("keep", 0) >= keep
             ):
                 return receipt
@@ -573,8 +612,13 @@ def download(
         for attempt in range(3):
             try:
                 with _open_source(meta) as response:
-                    rows, stats = sample_full_stream(response, meta, settings, keep)
-                return save_candidates(settings, meta, rows, stats, keep=keep)
+                    if partial:
+                        rows, stats = sample_partial_stream(response, meta, settings, keep)
+                    else:
+                        rows, stats = sample_full_stream(response, meta, settings, keep)
+                return save_candidates(
+                    settings, meta, rows, stats, kind, not partial, keep
+                )
             except (OSError, DataError):
                 if attempt == 2:
                     raise
@@ -582,4 +626,4 @@ def download(
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
         results = list(pool.map(download_class, selected))
-    return {"source_kind": "quickdraw", "receipts": results}
+    return {"source_kind": kind, "receipts": results}
