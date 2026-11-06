@@ -185,26 +185,27 @@ class GuesserDataModule(L.LightningDataModule):
                 augment=False,
             )
 
+    def _dataloader(self, dataset: GuesserDataset, *, shuffle: bool) -> DataLoader:
+        options: dict = {
+            "batch_size": self.batch_size,
+            "shuffle": shuffle,
+            "num_workers": self.num_workers,
+            "pin_memory": torch.cuda.is_available(),
+        }
+        if self.num_workers > 0:
+            # Prefetch/render on CPU workers while the GPU trains.
+            options["persistent_workers"] = True
+            options["prefetch_factor"] = 2
+        return DataLoader(dataset, **options)
+
     def train_dataloader(self) -> DataLoader:
         if self.train_dataset is None:
             self.setup("fit")
         assert self.train_dataset is not None
-        return DataLoader(
-            self.train_dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
-            pin_memory=torch.cuda.is_available(),
-        )
+        return self._dataloader(self.train_dataset, shuffle=True)
 
     def val_dataloader(self) -> DataLoader:
         if self.val_dataset is None:
             self.setup("fit")
         assert self.val_dataset is not None
-        return DataLoader(
-            self.val_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            pin_memory=torch.cuda.is_available(),
-        )
+        return self._dataloader(self.val_dataset, shuffle=False)
