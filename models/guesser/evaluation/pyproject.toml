@@ -12,8 +12,8 @@ inference = [
     "pydantic>=2.11,<3",
     "safetensors>=0.6,<1",
     "timm>=1.0,<2",
-    "torch==2.7.1",
-    "torchvision==0.22.1",
+    "torch==2.13.0",
+    "torchvision==0.28.0",
     "uvicorn>=0.35,<1",
 ]
 
@@ -25,14 +25,14 @@ notebook = [
     "nbconvert>=7.16,<8",
     "numpy>=2.2,<3",
     "pandas>=2.3,<3",
-    "pillow>=11,<13",
+    "pillow>=13,<14",
     "scikit-learn>=1.7,<2",
 ]
 dev = [
     "nbdime>=4,<5",
     "nbstripout>=0.8,<1",
     "pre-commit>=4,<5",
-    "pytest>=8.4,<9",
+    "pytest>=9.0.3,<10",
     "ruff>=0.14,<1",
 ]
 
