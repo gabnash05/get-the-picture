@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import sys
 import tempfile
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
@@ -37,6 +38,16 @@ def json_bytes(value: Any) -> bytes:
 
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def progress(stage: str, message: str) -> None:
+    """Report stage progress on stderr, keeping the stdout result readable.
+
+    Long stages run for minutes and print nothing between their start and their
+    JSON result. Each line is flushed so a notebook or terminal watching the
+    process sees work advancing instead of an apparently hung cell.
+    """
+    print(f"[{stage}] {message}", file=sys.stderr, flush=True)
 
 
 def object_hash(value: Any) -> str:

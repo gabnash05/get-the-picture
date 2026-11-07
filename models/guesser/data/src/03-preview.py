@@ -102,7 +102,7 @@ def create_example(settings: Settings) -> dict:
         {"source_kind": "synthetic_validation", "categories": [meta]},
     )
     candidates, stats = download.sample_full_stream(lines, meta, settings)
-    save_candidates(
+    download.save_candidates(
         settings, meta, candidates, stats, source_kind="synthetic_validation"
     )
     summary = prepare(settings)

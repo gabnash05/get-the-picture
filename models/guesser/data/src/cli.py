@@ -14,7 +14,7 @@ from pathlib import Path
 from pprint import pprint
 
 from . import __version__
-from .common import DataError, load_step
+from .common import DataError, load_step, progress
 from .settings import (
     CONCURRENCY,
     DEFAULT_DATA_ROOT,
@@ -192,10 +192,7 @@ def dispatch(args: argparse.Namespace) -> dict:
             }
         if args.command == "download":
             ids = _class_ids(args.classes)
-            print(
-                f"Downloading {settings.profile} ({settings.download_method})...",
-                file=sys.stderr,
-            )
+            progress("download", f"{settings.profile} ({settings.download_method})")
             result = download.download(
                 settings,
                 class_ids=ids,

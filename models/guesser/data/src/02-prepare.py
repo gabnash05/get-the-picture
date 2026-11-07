@@ -17,6 +17,7 @@ from .common import (
     load_step,
     labels,
     priority,
+    progress,
     read_json,
 )
 from .settings import PACKAGE_ROOT, Settings
@@ -98,10 +99,15 @@ def _validate_sources(settings, classes, receipts, *, summary=False):
 def _verified_receipts(settings, classes):
     inventory = read_json(settings.base / "inventory.json", {"categories": []})
     metadata = {item["class_id"]: item for item in inventory["categories"]}
-    receipts = {
-        item["class_id"]: verify_receipt(settings, metadata.get(item["class_id"], item))
-        for item in classes
-    }
+    total = len(classes)
+    # Hashing every cached candidate file takes minutes, so report it advancing.
+    progress("prepare", f"verifying {total} cached candidate files")
+    receipts = {}
+    for index, item in enumerate(classes, start=1):
+        class_id = item["class_id"]
+        receipts[class_id] = verify_receipt(settings, metadata.get(class_id, item))
+        if index % 25 == 0 or index == total:
+            progress("prepare", f"verified {index}/{total} candidate files")
     _validate_sources(settings, classes, receipts)
     return receipts
 
@@ -191,7 +197,10 @@ def prepare(settings: Settings) -> dict:
         db.executescript("""CREATE TABLE candidates (id TEXT, class_id INTEGER, hash TEXT,
             content TEXT, rank TEXT, offset INTEGER, length INTEGER, flagged INTEGER);
             CREATE INDEX by_id ON candidates(id); CREATE INDEX by_hash ON candidates(hash);""")
-        for item in classes:
+        total = len(classes)
+        candidates = sum(row.get("candidate_count", 0) for row in receipts.values())
+        progress("prepare", f"indexing {candidates:,} candidates from {total} classes")
+        for index, item in enumerate(classes, start=1):
             class_id = item["class_id"]
             with candidate_path(settings, class_id).open("rb") as source:
                 while True:
@@ -232,11 +241,14 @@ def prepare(settings: Settings) -> dict:
                             int(row.get("id_conflict", False)),
                         ),
                     )
+            if index % 25 == 0 or index == total:
+                progress("prepare", f"indexed {index}/{total} classes")
         db.executescript("""CREATE TABLE conflicts AS SELECT id FROM candidates GROUP BY id
             HAVING COUNT(DISTINCT content)>1 OR COUNT(DISTINCT class_id)>1 OR MAX(flagged)>0;
             CREATE INDEX conflict_ids ON conflicts(id);
             CREATE TABLE cross_hashes AS SELECT hash FROM candidates GROUP BY hash
             HAVING COUNT(DISTINCT class_id)>1; CREATE INDEX cross_values ON cross_hashes(hash);""")
+        quarantined = 0
         with atomic_output(settings.base / "quarantine.jsonl") as output:
             for (
                 did,
@@ -259,12 +271,18 @@ def prepare(settings: Settings) -> dict:
                     )
                     + b"\n"
                 )
+                quarantined += 1
+        progress("prepare", f"quarantined {quarantined} candidate records")
         db.execute(
             "CREATE TABLE selected (class_id INTEGER, id TEXT, hash TEXT, offset INTEGER, length INTEGER, split_rank TEXT)"
         )
         db.execute("CREATE INDEX selected_class ON selected(class_id, split_rank, id)")
         shortage = []
-        for item in classes:
+        progress(
+            "prepare",
+            f"selecting {settings.spec['final']:,} originals per class across {total} classes",
+        )
+        for index, item in enumerate(classes, start=1):
             cid = item["class_id"]
             chosen = []
             seen_ids, seen_hashes = set(), set()
@@ -305,6 +323,8 @@ def prepare(settings: Settings) -> dict:
                     for did, digest, offset, length in chosen
                 ),
             )
+            if index % 25 == 0 or index == total:
+                progress("prepare", f"selected {index}/{total} classes")
         if shortage:
             hint = "; ".join(
                 f"download --profile {settings.profile} --class "
@@ -345,7 +365,8 @@ def prepare(settings: Settings) -> dict:
                 writers[split] = pq.ParquetWriter(
                     manifest_dir / f"{split}.parquet.part", schema
                 )
-            for item in classes:
+            progress("prepare", f"writing split records and manifests for {total} classes")
+            for index, item in enumerate(classes, start=1):
                 cid = item["class_id"]
                 counts[cid] = {}
                 timing[cid] = {"min_ms": None, "max_ms": None, "zero_count": 0}
@@ -405,6 +426,8 @@ def prepare(settings: Settings) -> dict:
                         writers[split].write_table(
                             pa.Table.from_pylist(rows, schema=schema)
                         )
+                if index % 25 == 0 or index == total:
+                    progress("prepare", f"wrote {index}/{total} classes")
         finally:
             for writer in writers.values():
                 writer.close()
@@ -415,6 +438,8 @@ def prepare(settings: Settings) -> dict:
                 manifest_dir / f"{split}.parquet",
             )
             manifest_hashes[split] = file_hash(manifest_dir / f"{split}.parquet")
+        originals = sum(sum(row.values()) for row in counts.values())
+        progress("prepare", f"prepared {originals:,} originals across {total} classes")
         summary = _summary(
             settings, classes, receipts, counts, timing, record_hashes, manifest_hashes
         )
