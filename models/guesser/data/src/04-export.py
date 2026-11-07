@@ -14,6 +14,7 @@ from .common import (
     file_hash,
     json_bytes,
     load_step,
+    progress,
     read_json,
 )
 from .settings import PACKAGE_ROOT, Settings
@@ -96,12 +97,17 @@ def _audit_impl(settings, connection):
         for class_id in classes
     }
     hashes = {}
+    progress("export", "auditing prepared manifests")
     for split in ("train", "validation", "test"):
         path = base / "prepared" / "manifests" / f"{split}.parquet"
         hashes[split] = file_hash(path)
+        manifest = pq.ParquetFile(path)
+        total_rows = manifest.metadata.num_rows
+        processed = 0
+        progress("export", f"auditing {split}: {total_rows:,} rows")
         for row in (
             item
-            for batch in pq.ParquetFile(path).iter_batches(batch_size=4096)
+            for batch in manifest.iter_batches(batch_size=4096)
             for item in batch.to_pylist()
         ):
             drawing_id = row["drawing_id"]
@@ -164,6 +170,11 @@ def _audit_impl(settings, connection):
             )
             t["zero_count"] += int(duration == 0)
             counts[class_id][split] += 1
+            processed += 1
+            if processed % 100_000 == 0:
+                progress(
+                    "export", f"audited {split} {processed:,}/{total_rows:,} rows"
+                )
     for relative, end in offsets.items():
         if (base / "prepared" / relative).stat().st_size != end:
             raise DataError("Unindexed record data", "audit_failed")
@@ -210,6 +221,7 @@ def export_dataset(settings: Settings, output_dir: str | Path | None = None) -> 
     ):
         path = output / f"{role}-{settings.profile}.zip"
         temporary = path.with_suffix(".zip.part")
+        progress("export", f"writing {path.name}")
         with zipfile.ZipFile(
             temporary, "w", zipfile.ZIP_DEFLATED, allowZip64=True
         ) as archive:
@@ -245,5 +257,7 @@ def export_dataset(settings: Settings, output_dir: str | Path | None = None) -> 
                     archive.write(source, f"prepared/records/{split}/{source.name}")
         os.replace(temporary, path)
         results[role] = {"path": str(path), "sha256": file_hash(path)}
+        progress("export", f"wrote {path.name} ({path.stat().st_size / 1024**2:,.1f} MiB)")
     atomic_json(output / "checksums.json", results)
+    progress("export", f"checksums written to {output / 'checksums.json'}")
     return results
