@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import lightning as L
@@ -34,6 +34,12 @@ DEFAULT_PREPARED = (
     / "prepared"
 )
 DEFAULT_CHECKPOINT_ROOT = Path(__file__).resolve().parents[1] / "checkpoints"
+DEFAULT_RENDER_CACHE = (
+    Path(__file__).resolve().parents[1] / ".local" / "cache" / "rendered-views"
+)
+DEFAULT_MANIFEST_CACHE = (
+    Path(__file__).resolve().parents[1] / ".local" / "cache" / "manifests"
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -73,6 +79,34 @@ def parse_args() -> argparse.Namespace:
         help="DataLoader workers for on-demand render/prefetch (0=debug; 2-4 typical on Windows).",
     )
     parser.add_argument("--patience", type=int, default=2)
+    parser.add_argument(
+        "--manifest-cache-dir",
+        type=Path,
+        default=DEFAULT_MANIFEST_CACHE,
+        help="Shared memory-mapped manifest cache for train/validation workers.",
+    )
+    parser.add_argument(
+        "--no-manifest-cache",
+        action="store_true",
+        help="Use process-local Arrow manifests instead of shared disk mappings.",
+    )
+    parser.add_argument(
+        "--render-cache-dir",
+        type=Path,
+        default=DEFAULT_RENDER_CACHE,
+        help="Shared validation render cache (training views remain epoch-dependent).",
+    )
+    parser.add_argument(
+        "--no-render-cache",
+        action="store_true",
+        help="Disable validation render caching for an uncached benchmark.",
+    )
+    parser.add_argument(
+        "--render-cache-max-bytes",
+        type=int,
+        default=2 * 1024**3,
+        help="Maximum compressed cache payload bytes (SQLite overhead is additional).",
+    )
     parser.add_argument("--num-classes", type=int, default=345)
     parser.add_argument("--seed", type=int, default=SEED)
     parser.add_argument(
@@ -175,6 +209,9 @@ def train_one(args: argparse.Namespace, complete_only: bool) -> dict:
         batch_size=args.batch_size,
         num_workers=args.num_workers,
         complete_only=complete_only,
+        cache_dir=None if args.no_render_cache else args.render_cache_dir,
+        cache_max_bytes=args.render_cache_max_bytes,
+        manifest_cache_dir=None if args.no_manifest_cache else args.manifest_cache_dir,
     )
     model = GuesserViTModule(num_classes=args.num_classes)
 
@@ -210,9 +247,9 @@ def train_one(args: argparse.Namespace, complete_only: bool) -> dict:
         log_every_n_steps=10,
     )
 
-    started = datetime.now(timezone.utc).isoformat()
+    started = datetime.now(UTC).isoformat()
     trainer.fit(model, datamodule=datamodule, ckpt_path=ckpt_path)
-    finished = datetime.now(timezone.utc).isoformat()
+    finished = datetime.now(UTC).isoformat()
 
     labels_meta = _labels_sidecar(args.prepared_dir)
     selection = {
@@ -229,6 +266,13 @@ def train_one(args: argparse.Namespace, complete_only: bool) -> dict:
         "accumulate_grad_batches": args.accumulate_grad_batches,
         "effective_batch_size": args.batch_size * args.accumulate_grad_batches,
         "num_workers": args.num_workers,
+        "manifest_cache_dir": (
+            None if args.no_manifest_cache else str(args.manifest_cache_dir.resolve())
+        ),
+        "render_cache_dir": (
+            None if args.no_render_cache else str(args.render_cache_dir.resolve())
+        ),
+        "render_cache_max_bytes": args.render_cache_max_bytes,
         "patience": args.patience,
         "precision": args.precision,
         "num_classes": args.num_classes,
@@ -268,7 +312,7 @@ def main() -> None:
     summary_path.write_text(
         json.dumps(
             {
-                "created_utc": datetime.now(timezone.utc).isoformat(),
+                "created_utc": datetime.now(UTC).isoformat(),
                 "runs": results,
             },
             indent=2,
