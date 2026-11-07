@@ -51,7 +51,7 @@ Artifacts per run: `checkpoints/A_complete_only/` and `checkpoints/B_partial/` (
 
 ## Pause and resume
 
-`last.ckpt` is refreshed every 1000 train steps (new runs) and at epoch end. Resume with the same flags plus `--resume`:
+`last.ckpt` is refreshed every 1000 train steps; the best `val_acc` checkpoint is saved after each validation epoch (separate callbacks). Resume with the same flags plus `--resume`:
 
 ```powershell
 .\.venv\Scripts\python.exe -m training.train --run a --num-workers 2 --resume
