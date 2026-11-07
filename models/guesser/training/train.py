@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -120,6 +121,19 @@ def _run_name(complete_only: bool) -> str:
     return "A_complete_only" if complete_only else "B_partial"
 
 
+def _labels_sidecar(prepared_dir: Path) -> dict[str, str | None]:
+    """Locate labels.json next to prepared/ for handoff hashing."""
+    candidates = [
+        prepared_dir.parent / "labels.json",
+        prepared_dir / "labels.json",
+    ]
+    for path in candidates:
+        if path.is_file():
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            return {"labels_path": str(path.resolve()), "labels_sha256": digest}
+    return {"labels_path": None, "labels_sha256": None}
+
+
 def _resolve_ckpt_path(
     args: argparse.Namespace, run_dir: Path, complete_only: bool
 ) -> str | None:
@@ -200,6 +214,7 @@ def train_one(args: argparse.Namespace, complete_only: bool) -> dict:
     trainer.fit(model, datamodule=datamodule, ckpt_path=ckpt_path)
     finished = datetime.now(timezone.utc).isoformat()
 
+    labels_meta = _labels_sidecar(args.prepared_dir)
     selection = {
         "run": run_name,
         "complete_only": complete_only,
@@ -207,10 +222,13 @@ def train_one(args: argparse.Namespace, complete_only: bool) -> dict:
         "finished_utc": finished,
         "seed": args.seed,
         "prepared_dir": str(args.prepared_dir.resolve()),
+        "backbone": "vit_tiny_patch16_224.augreg_in21k_ft_in1k",
+        "preprocess_candidate": "foreground",
         "max_epochs": max_epochs,
         "batch_size": args.batch_size,
         "accumulate_grad_batches": args.accumulate_grad_batches,
         "effective_batch_size": args.batch_size * args.accumulate_grad_batches,
+        "num_workers": args.num_workers,
         "patience": args.patience,
         "precision": args.precision,
         "num_classes": args.num_classes,
@@ -224,6 +242,7 @@ def train_one(args: argparse.Namespace, complete_only: bool) -> dict:
         "last_model_path": checkpoint.last_model_path,
         "resumed_from": ckpt_path,
         "fast_dev": bool(args.fast),
+        **labels_meta,
     }
     selection_path = run_dir / "checkpoint-selection.json"
     selection_path.write_text(json.dumps(selection, indent=2) + "\n", encoding="utf-8")
