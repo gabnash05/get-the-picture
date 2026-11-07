@@ -6,10 +6,13 @@ Run the [README setup](README.md#setup) from `models/guesser/data/`. Dependencie
 
 ## 2. Download, clean and sample
 
-```powershell
-$profile = "medium"  # Choose production, medium or small.
-.\guesser-data.ps1 download --profile $profile
+Run these commands from `models/guesser/data/` in Windows PowerShell or Linux bash. Command Prompt users can run the same command text but must omit `#` comments. Keep the same profile through download, prepare and export.
+
+```sh
+uv run --frozen guesser-data download --profile medium
 ```
+
+Replace `medium` with `small`, or omit `--profile` to keep `production`.
 
 Without `--profile`, this selects the unchanged `production` size. All three training profiles preserve all 345 official category IDs:
 
@@ -21,11 +24,11 @@ Without `--profile`, this selects the unchanged `production` size. All three tra
 
 For a smaller download and training run, select a profile on every command:
 
-```powershell
-.\guesser-data.ps1 download --profile medium
-.\guesser-data.ps1 prepare --profile medium
-.\guesser-data.ps1 preview --profile medium   # optional
-.\guesser-data.ps1 export --profile medium
+```sh
+uv run --frozen guesser-data download --profile medium
+uv run --frozen guesser-data prepare --profile medium
+uv run --frozen guesser-data preview --profile medium   # optional
+uv run --frozen guesser-data export --profile medium
 ```
 
 Use `small` instead of `medium` for 500 final originals/category. Output stays separate under `.local/data/production/`, `.local/data/medium/` and `.local/data/small/`. The profile changes original-drawing counts, not the model's batch size.
@@ -36,16 +39,16 @@ Two categories stream concurrently by default. Cleaning preserves chronology, pa
 
 Selection uses `SHA256("select-v1|198173|<drawing_id>")` and string ID to rank the retained candidates. Production samples the full file into 5,500 slots; medium and small collect 2,200 and 550 distinct cleaned IDs before stopping. Retained conflicting IDs keep their slot and are flagged for quarantine; uninspected/discarded records have no conflict-tracking guarantee. Production receipts follow whole-file byte-count/MD5 verification. Smaller profiles record their generation, consumed byte count and candidate hash with `source_kind=quickdraw_partial`, `complete=false` and `full_source_verified=false`; those flags describe the source file, not whether the requested sample finished. Matching completed samples resume; interrupted categories restart at zero. Existing compatible production receipts remain usable.
 
-```powershell
-.\guesser-data.ps1 download --profile $profile --class "cat" --class "alarm clock" --concurrency 1
+```sh
+uv run --frozen guesser-data download --profile medium --class "cat" --class "alarm clock" --concurrency 1
 ```
 
 A class selection follows the profile: production reads each chosen file completely, while medium/small stop at their reserve. No global download cap, source SQLite index or automatic conflict re-download is used.
 
 ## 3. Prepare originals and splits
 
-```powershell
-.\guesser-data.ps1 prepare --profile $profile
+```sh
+uv run --frozen guesser-data prepare --profile medium
 ```
 
 One temporary SQLite index checks retained IDs/content/labels and exact full x/y/t trajectories across classes. Conflicts are quarantined, never relabeled. Same-label exact trajectories keep the best-ranked representative. Optional `excluded-ids.txt` entries remain excluded.
@@ -54,25 +57,25 @@ Eligible originals are ordered by the separate `split-v1` hash plus ID. The sele
 
 If a class is short, use the explicit refill command in the error, for example:
 
-```powershell
-.\guesser-data.ps1 download --profile medium --class "alarm clock" --candidates 3200
-.\guesser-data.ps1 prepare --profile medium
+```sh
+uv run --frozen guesser-data download --profile medium --class "alarm clock" --candidates 3200
+uv run --frozen guesser-data prepare --profile medium
 ```
 
 Preparation does not start network transfers. `dataset-summary.json` contains actual labels, counts, source information and record/manifest hashes. It does not bind the data to README or code-file hashes.
 
 ## 4. Optionally inspect examples
 
-```powershell
-.\guesser-data.ps1 preview --profile $profile
+```sh
+uv run --frozen guesser-data preview --profile medium
 ```
 
 Open `<data-root>/<profile>/preview/index.html` for the selected size. Sheets use training originals only. There are no approval CSVs, reviewers or sign-offs. To omit an individual drawing, put its ID in `<profile>/excluded-ids.txt`, prepare again, and refill only if needed. A legacy nonempty exclusion list is adopted once when no text list exists.
 
 ## 5. Check once and export
 
-```powershell
-.\guesser-data.ps1 export --profile $profile
+```sh
+uv run --frozen guesser-data export --profile medium
 ```
 
 Export performs one final audit of prepared counts, IDs/trajectories across splits, metadata, byte offsets and data hashes, then writes separate trainer and held-out-test ZIP64 packages plus checksums. There is no freeze command. `audit` is available for an optional standalone check; it is not another required step.
@@ -113,7 +116,7 @@ with IndexedDrawings(prepared, "validation") as drawings:
 
 Use the same frozen profile and its train/validation/test packages throughout an experiment. Different profiles have different held-out originals, so their scores alone do not isolate the effect of dataset size. Medium and small are trainable, but no accuracy level is guaranteed.
 
-The loader owns a bounded cache per process and reopens handles after multiprocessing/PID changes. A PyTorch Dataset adapter and DataLoader are the model owner's next step. No custom batching engine is included.
+The loader owns a bounded cache per process and reopens handles after multiprocessing/PID changes. The [training package](../training/README.md) supplies the PyTorch Dataset adapter and DataLoader; reuse these on Windows and Linux rather than building a custom batching engine.
 
 Training cuts are seeded by ID/epoch/purpose: 20% complete, otherwise 10%-90% elapsed time; blank views have bounded retries. Evaluation uses ten fixed stages, retaining blank/uncertain/unchanged outcomes. These are elapsed-time fractions, not point-count fractions. Geometry uses only the current prefix.
 
