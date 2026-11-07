@@ -165,6 +165,16 @@ fast and full runs have separate ignored checkpoint roots. Remove inherited
 `PYTHONPATH`/`PYTHONHOME` from subprocesses so the model interpreter cannot
 accidentally import packages from the notebook host environment.
 
+The launcher inherits `training.train`'s input-pipeline defaults: shared
+memory-mapped train/validation manifests and a bounded, lossless validation-view
+cache. Training widths and partial cuts still change with the shared worker epoch;
+training renders are not frozen or cached across epochs. Cache files live under
+the model project's ignored `.local/cache/`, not in exported datasets. See the
+[training cache/worker guide](../training/README.md#deterministic-views-cache-and-workers)
+for storage requirements, invalidation, relocation and benchmark-disable flags.
+Existing kernels must launch a new trainer process to load changed training code;
+autoreloading the notebook does not update an already-running child.
+
 ## Model-evaluation notebook
 
 `04_model_evaluation.ipynb` gives the next action for the current repository
