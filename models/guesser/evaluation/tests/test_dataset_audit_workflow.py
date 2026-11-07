@@ -132,7 +132,11 @@ def test_pipeline_uses_discovered_defaults_and_resolves_output_paths() -> None:
         exec("".join(notebook["cells"][index]["source"]), namespace)  # noqa: S102
 
     # Discovery is read-only; production stages are replaced by captured subprocess calls.
-    with patch("subprocess.run", return_value=SimpleNamespace(stdout=json.dumps(defaults))):
+    # The environment guard is checked separately, so leave it out of the command capture.
+    with (
+        patch("subprocess.run", return_value=SimpleNamespace(stdout=json.dumps(defaults))),
+        patch("guesser_evaluation.data_environment.require_data_environment"),
+    ):
         execute_cell(1)
     execute_cell(3)
     assert namespace["PROFILE"] == "medium"
@@ -140,7 +144,10 @@ def test_pipeline_uses_discovered_defaults_and_resolves_output_paths() -> None:
     assert namespace["CANDIDATE_RESERVE"] is None
     namespace.update(DATA_ROOT="custom-data", EXPORT_OUTPUT_DIR="custom-exports")
     execute_cell(5)
-    with patch("subprocess.run") as run:
+    with (
+        patch("subprocess.run") as run,
+        patch("guesser_evaluation.data_environment.require_data_environment"),
+    ):
         execute_cell(6)
         namespace.update(RUN_PIPELINE=True, INCLUDE_PREVIEW=True)
         execute_cell(7)
@@ -153,3 +160,23 @@ def test_pipeline_uses_discovered_defaults_and_resolves_output_paths() -> None:
     download = next(command for command in commands if "download" in command)
     assert "--concurrency" not in download
     assert "--candidates" not in download
+
+
+def test_data_profile_checks_environment_before_querying() -> None:
+    """Report an unsynced data environment instead of uv's missing-script error."""
+    guesser_root = Path(__file__).parents[2]
+    with (
+        patch.object(
+            dataset_audit_workflow,
+            "require_data_environment",
+            side_effect=RuntimeError("unsynced"),
+        ) as guard,
+        patch.object(dataset_audit_workflow.subprocess, "run") as run,
+        pytest.raises(RuntimeError, match="unsynced"),
+    ):
+        dataset_audit_workflow.data_profile("production")
+
+    # The guard receives the data project and the repository root used for the query.
+    assert guard.call_args.args[0] == guesser_root / "data"
+    assert guard.call_args.kwargs["cwd"] == guesser_root.parents[1]
+    run.assert_not_called()
