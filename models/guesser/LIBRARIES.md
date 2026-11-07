@@ -6,7 +6,7 @@ Use existing deep learning libraries for standard work. This supplements the rev
 
 The completed data package already uses NumPy for array operations, Pillow for drawing/resizing, OpenCV for edge detection, PyArrow for Parquet, SQLite for identity/conflict indexing, and checksum libraries. Its record reader handles the project's seekable JSONL format; it is not a replacement for PyTorch's batching and worker system.
 
-Training, model evaluation and inference remain placeholders. Their deep learning packages are not installed or locked by the data-only project. The timm backbone was already selected in the reviewed plan; Lightning, torchvision and TorchMetrics are now explicit requirements for those future implementations. No weights, dataset or GPU packages were downloaded for this library review.
+Training adapters live under [`training/`](training/README.md) (LightningModule/DataModule, A/B `train.py`, smoke and `compare_ab`). The model uv project at `models/guesser/` declares `torch`, `torchvision`, `timm`, `lightning`, `torchmetrics` and `safetensors` in `pyproject.toml` / `uv.lock`. Choose the CUDA/CPU index for the actual training host before `uv sync`. Evaluation metrics beyond training-time validation and the inference service remain Validation/Inference owner work. Trained weights are not committed.
 
 ## Required library map
 
@@ -55,12 +55,12 @@ The only custom neural wrapper should be a small LightningModule around the exis
 
 Project-specific code remains necessary for ordered timestamp cuts, exact sampling/conflict rules, early-recognition aggregation and game checkpoint/version policy. Implement those as small adapters around the libraries. A generic random split or automatic image crop must not replace an agreed rule and change the experiment.
 
-## uv setup when the model owner starts
+## uv setup for the model project
 
-The current working uv project is `data/`. Keep it independent so data preparation never requires a large torch/GPU install. The model owner can initialize a separate uv project at `models/guesser/`, then add the local data package and model packages. These commands are future setup instructions, not actions performed by this review:
+Keep `data/` independent so data preparation never requires a large torch/GPU install. The model uv project already lives at `models/guesser/` with an editable workspace dependency on `./data`. Teammates should sync that project rather than re-running `uv init`:
 
 ```powershell
-# Run in models/guesser/ on E:; keep environment and cache here.
+# Run in models/guesser/; keep environment and cache here.
 $env:UV_CACHE_DIR = Join-Path $PWD '.local/cache/uv'
 $env:TEMP = Join-Path $PWD '.local/tmp'
 $env:TMP = $env:TEMP
@@ -68,12 +68,11 @@ $env:HF_HOME = Join-Path $PWD '.local/cache/huggingface'
 $env:TORCH_HOME = Join-Path $PWD '.local/cache/torch'
 $env:UV_PYTHON_DOWNLOADS = 'never'
 New-Item -ItemType Directory -Force -Path $env:TEMP | Out-Null
-uv init --bare --app --python 3.13 --no-workspace --vcs none
-uv add --editable ./data
+uv sync --frozen
 ```
 
-Before adding/syncing torch and torchvision, follow the official [uv PyTorch guide](https://docs.astral.sh/uv/guides/integration/pytorch/) to configure a compatible explicit CPU/CUDA index for the actual laptop. A gaming laptop description alone does not identify its driver or supported wheel. Keep torch and torchvision compatible and use uv's project configuration/lock; the older pip/CUDA command in the reviewed plan is historical and is superseded by this uv requirement.
+If the locked CUDA index does not match the host (for example a different driver or Linux), follow the official [uv PyTorch guide](https://docs.astral.sh/uv/guides/integration/pytorch/), adjust `[[tool.uv.index]]` / `[tool.uv.sources]` for torch/torchvision, then re-lock and sync. Keep torch and torchvision compatible. A gaming laptop description alone does not identify the correct wheel.
 
-The model environment's required packages are `torch`, `torchvision`, `timm`, `lightning`, `torchmetrics` and `safetensors`; service dependencies are `fastapi`, `pydantic` and `uvicorn`. Declare the chosen packages/backends through uv, commit pyproject.toml and uv.lock, and have teammates use `uv sync --frozen`. Version compatibility and GPU availability must be checked on the actual training host; this document does not claim that setup has been completed.
+Required model packages: `torch`, `torchvision`, `timm`, `lightning`, `torchmetrics`, `safetensors`. Service dependencies (`fastapi`, `pydantic`, `uvicorn`) remain for the inference owner. Commit `pyproject.toml` and `uv.lock`; teammates use `uv sync --frozen` when the lock matches their platform.
 
-The evaluation scaffold moved to `evaluation/` and keeps its Python 3.12 lock. Data remains Python 3.13. The move does not make those environments interchangeable or install model dependencies.
+The evaluation scaffold in `evaluation/` keeps its separate Python 3.12 lock. Data remains Python 3.13. Those environments are not interchangeable.

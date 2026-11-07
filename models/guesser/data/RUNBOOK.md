@@ -92,7 +92,7 @@ Prepared originals on disk
     -> renders only visible strokes
     -> foreground/edges preprocessing, fit/pad to 224x224, normalization
     -> one float32 [3,224,224] image plus a class label
-    -> PyTorch DataLoader batches images in the model project (future work)
+    -> PyTorch DataLoader batches images in ../training/
 ```
 
 ```python

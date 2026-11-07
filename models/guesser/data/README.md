@@ -39,7 +39,7 @@ The stage files use the requested literal `01-name.py` format. A small standard-
 ```text
 Prepare: 01 download/clean/sample -> 02 deduplicate/split -> 03 optional preview -> 04 check/export
 Load:    05 read one drawing -> 06 cut -> render -> preprocess -> one image + class label
-         -> PyTorch DataLoader batches images in the model project (future work)
+         -> PyTorch DataLoader batches images in ../training/
 ```
 
 ## Normal workflow
@@ -110,13 +110,13 @@ with IndexedDrawings(".local/data/medium/prepared", "train") as drawings:
     # sample['class_id']: separate training target
 ```
 
-Choose `.local/data/production/prepared`, `.local/data/medium/prepared` or `.local/data/small/prepared` to match your experiment. After extracting an export, use its `prepared/` directory instead. A dataset size is independent of the future model DataLoader batch size; use one frozen dataset and split package consistently within each experiment. Results from different profiles use different held-out originals and are not a controlled size comparison.
+Choose `.local/data/production/prepared`, `.local/data/medium/prepared` or `.local/data/small/prepared` to match your experiment. After extracting an export, use its `prepared/` directory instead. A dataset size is independent of the model DataLoader batch size in [`../training/`](../training/README.md); use one frozen dataset and split package consistently within each experiment. Results from different profiles use different held-out originals and are not a controlled size comparison.
 
 Use `candidate="edges"` to toggle edge preprocessing. Keep the same choice across a model's training, validation, test and inference. Both modes fit/pad the current visible shape to 224x224 and normalize by mean/std 0.5; do not normalize twice. Timestamps create partial images; they are not direct ViT input features. Training views are 20% complete and otherwise use an elapsed-time cut in 10%-90%. Evaluation emits ten fixed 10%-100% stages, including blank, uncertain and unchanged outcomes. Crop bounds never use future points.
 
 `dataset-summary.json` records source identity, seed, ordered labels, counts, preparation statistics and data hashes. It does not fingerprint source code or documentation. Export audits the data once, then separates training/validation from held-out test data. Changing prepared records requires preparation again; editing a README does not invalidate the dataset. Existing valid prepared data can receive the new summary during an audit without downloading again.
 
-The data project uses Python 3.13. The relocated evaluation/notebook project uses Python 3.12 with its own uv lock; this change does not unify those environments or implement training/batching.
+The data project uses Python 3.13. The relocated evaluation/notebook project uses Python 3.12 with its own uv lock; this change does not unify those environments. PyTorch batching and A/B training live in [`../training/`](../training/README.md).
 
 ## Development
 
