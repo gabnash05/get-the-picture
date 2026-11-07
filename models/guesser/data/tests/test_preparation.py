@@ -4,9 +4,14 @@ import zipfile
 from unittest.mock import patch
 
 import pytest
-
 from guesser_data.cli import parser
-from guesser_data.common import DataError, atomic_json, json_bytes, load_step, object_hash
+from guesser_data.common import (
+    DataError,
+    atomic_json,
+    json_bytes,
+    load_step,
+    object_hash,
+)
 from guesser_data.settings import PACKAGE_ROOT, Settings
 
 _download = load_step("01-download")
@@ -98,9 +103,11 @@ def test_trainable_profile_helpers(tmp_path, monkeypatch):
     with pytest.raises(DataError):
         parser().parse_args(["status", "--profile", "unknown"])
 
-    names = (PACKAGE_ROOT / "src" / "resources" / "categories.txt").read_text(
-        encoding="utf-8"
-    ).splitlines()
+    names = (
+        (PACKAGE_ROOT / "src" / "resources" / "categories.txt")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    )
     registry = [{"class_id": i, "source_name": name} for i, name in enumerate(names)]
     production = Settings(tmp_path, profile="production")
     medium = Settings(tmp_path, profile="medium")
