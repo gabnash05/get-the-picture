@@ -21,6 +21,7 @@ from .common import (
     iter_jsonl,
     object_hash,
     priority,
+    progress,
     read_json,
     receipt_path,
     write_jsonl,
@@ -606,7 +607,7 @@ def download(
                 and receipt.get("complete") is (not partial)
                 and receipt.get("keep", 0) >= keep
             ):
-                return receipt
+                return receipt, True
         except DataError:
             pass
         for attempt in range(3):
@@ -618,12 +619,23 @@ def download(
                         rows, stats = sample_full_stream(response, meta, settings, keep)
                 return save_candidates(
                     settings, meta, rows, stats, kind, not partial, keep
-                )
+                ), False
             except (OSError, DataError):
                 if attempt == 2:
                     raise
         raise DataError("Download failed", "request_failed")
 
+    total = len(selected)
+    progress("download", f"{total} classes from {kind}, concurrency {concurrency}")
+    results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
-        results = list(pool.map(download_class, selected))
+        # Report each class as it finishes so a long resume is visibly progressing.
+        completed = zip(selected, pool.map(download_class, selected))
+        for index, (meta, (receipt, cached)) in enumerate(completed, start=1):
+            results.append(receipt)
+            state = "cached" if cached else "sampled"
+            progress(
+                "download",
+                f"{index}/{total} c{meta['class_id']:03d} {meta['source_name']} ({state})",
+            )
     return {"source_kind": kind, "receipts": results}
