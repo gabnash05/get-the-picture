@@ -4,7 +4,7 @@ Lightning adapters for fine-tuning the agreed ViT-Tiny backbone on prepared Gues
 
 ## Role split (current)
 
-- **This machine / small-dataset owner:** finish clean A/B on the **small** prepared set, compare validation curves, package the training codebase + recipe for handoff.
+- **Small-dataset owner:** finish clean A/B on the **small** prepared set, compare validation curves, package the training codebase + recipe for handoff.
 - **Teammate (faster laptop):** reuse this code later on **medium/production** prepared data via `--prepared-dir` (do not change splits or held-out test).
 
 Scripts:
@@ -20,48 +20,90 @@ Scripts:
 
 Use the sibling [data package](../data/README.md) for prepared data and shared preprocessing. Put weights under [`../checkpoints/`](../checkpoints/).
 
+## Setup (Windows and Linux)
+
+The training owner first ran the pipeline on Windows (team-reported). Linux is the port target; portable commands alone do not establish that a Linux GPU run has passed. Use Python 3.13, uv and an appropriate GPU driver. See the [library guide](../LIBRARIES.md#uv-setup-for-the-model-project) for backend selection and optional shell-specific cache settings.
+
+From the repository root, sync the model environment and check the selected PyTorch build:
+
+```sh
+uv sync --project models/guesser --frozen
+uv run --project models/guesser --no-sync python -c "import torch; print('torch:', torch.__version__); print('CUDA build:', torch.version.cuda); print('CUDA available:', torch.cuda.is_available())"
+```
+
+The GPU smoke test requires `CUDA available: True`; investigate the driver/build if it is false instead of assuming training is using the GPU. The main trainer can fall back to CPU, which is not a GPU validation.
+
+Training defaults and the smoke script require `models/guesser/data/.local/data/small/prepared/`, including train and validation manifests. Production data does not satisfy that default path. If small data is not already prepared, run these commands from the repository root, with no other data job active:
+
+```sh
+uv sync --project models/guesser/data --frozen
+uv run --project models/guesser/data --frozen guesser-data download --profile small
+uv run --project models/guesser/data --frozen guesser-data prepare --profile small
+```
+
+Alternatively, extract a matching trainer archive and pass its `prepared/` directory with `--prepared-dir` to `training.train`. The smoke script has no path flag and still requires the small default tree. Keep held-out test sealed. Paths containing spaces must be quoted; forward slashes in Python/uv path arguments work on both systems. Never transfer virtual environments between machines.
+
 ## Smoke check
 
-From `models/guesser/` with the model venv active:
+From `models/guesser/`:
 
-```powershell
-.\.venv\Scripts\python.exe -m training.smoke_test
+```sh
+uv run python -m training.smoke_test
 ```
+
+`uv run` resolves the project environment on every platform, so there is no activation step. Commands and `#` comments work in Windows PowerShell and Linux bash. In Windows Command Prompt (cmd), run only the command lines and omit `#` comments.
+
+Run every `python -m training.…` command below from `models/guesser/`. `uv --project` selects an environment but does not change the working directory; invoking these modules from the repository root will not locate the uninstalled `training` package.
 
 ## Train A and B (equal budget)
 
 Defaults match the model plan: seed `198173`, effective batch 32 (`8 × accumulate 4`), up to 6 epochs, early stopping patience 2, FP32, validation-only checkpointing under `../checkpoints/`.
 
-```powershell
-# Dry run (1 epoch, a few batches)
-.\.venv\Scripts\python.exe -m training.train --fast
+Dry run (one epoch, a few batches), isolated from real checkpoint output:
 
-# Full matched runs on the small prepared set (2 workers prefetch renders)
-.\.venv\Scripts\python.exe -m training.train --run both --num-workers 2
+```sh
+uv run python -m training.train --fast --checkpoint-root checkpoints/smoke
+```
 
-# One run at a time
-.\.venv\Scripts\python.exe -m training.train --run a --num-workers 2
-.\.venv\Scripts\python.exe -m training.train --run b --num-workers 2
+Full runs on small (two workers prefetch renders):
 
-# Teammate later: point at a larger prepared tree (same flags otherwise)
-.\.venv\Scripts\python.exe -m training.train --run both --num-workers 4 --prepared-dir data\.local\data\production\prepared
+```sh
+# A then B: same requested settings, different complete/partial inputs.
+uv run python -m training.train --run both --num-workers 2
+```
+
+Or run each arm separately with matching settings:
+
+```sh
+# Complete-only baseline.
+uv run python -m training.train --run a --num-workers 2
+# Partial-view experiment; keep all other settings matched to A.
+uv run python -m training.train --run b --num-workers 2
+```
+
+For a larger prepared tree, use a separate checkpoint root so small-run results are not mixed with production:
+
+```sh
+uv run python -m training.train --run both --num-workers 4 --prepared-dir data/.local/data/production/prepared --checkpoint-root checkpoints/production
 ```
 
 Artifacts per run: `checkpoints/A_complete_only/` and `checkpoints/B_partial/` (weights, CSV logs, `checkpoint-selection.json`). Do not use held-out test for tuning.
+
+When using a custom checkpoint root, pass that same `--checkpoint-root` to resume and comparison commands. In particular, compare production runs with `uv run python -m training.compare_ab --checkpoint-root checkpoints/production`. Worker counts are tuning choices on either OS: start at zero for debugging, then measure two or four workers before increasing them.
 
 ## Pause and resume
 
 `last.ckpt` is refreshed every 1000 train steps (new runs) and at epoch end. Resume with the same flags plus `--resume`:
 
-```powershell
-.\.venv\Scripts\python.exe -m training.train --run a --num-workers 2 --resume
-.\.venv\Scripts\python.exe -m training.train --run b --num-workers 2 --resume
+```sh
+uv run python -m training.train --run a --num-workers 2 --resume
+uv run python -m training.train --run b --num-workers 2 --resume
 ```
 
 ## Compare A vs B (after both runs finish)
 
-```powershell
-.\.venv\Scripts\python.exe -m training.compare_ab
+```sh
+uv run python -m training.compare_ab
 ```
 
 Writes `checkpoints/ab_comparison/`:
@@ -77,7 +119,7 @@ This is a **small-dataset training-validation** comparison, not the final ten-st
 Send / commit (weights stay gitignored — transfer separately if needed):
 
 1. `training/` package (`dataset.py`, `module.py`, `train.py`, `compare_ab.py`, `smoke_test.py`, README)
-2. `pyproject.toml` + `uv.lock` (CUDA index already set for Windows cu126; teammate should re-lock for their GPU if needed)
+2. `pyproject.toml` + `uv.lock` (Windows cu126 and Linux PyPI source markers are preserved; sync on the destination and verify CUDA before running, rather than re-locking just for an OS change)
 3. Small-run `checkpoint-selection.json` files (recipe + `labels_sha256`) and `ab_comparison/`
 4. Note the exact command used for small A/B, and that production only needs `--prepared-dir` (+ maybe more workers)
 
