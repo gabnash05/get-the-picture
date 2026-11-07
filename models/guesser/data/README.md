@@ -8,16 +8,14 @@ A small Python 3.13/uv project for preparing Quick, Draw! originals and creating
 
 From `models/guesser/data/`:
 
-```powershell
-$env:UV_CACHE_DIR = Join-Path $PWD '.local/cache/uv'
-$env:TEMP = Join-Path $PWD '.local/tmp'
-$env:TMP = $env:TEMP
-New-Item -ItemType Directory -Force -Path $env:TEMP | Out-Null
+```sh
 uv sync --frozen
-.\guesser-data.ps1 preflight
+uv run --frozen guesser-data preflight
 ```
 
-Use uv to change dependencies and keep `pyproject.toml`/`uv.lock` together. The launcher uses ignored local caches/temp files. Output defaults to `.local/data/production/`; `--data-root` can point to any drive. E: is recommended on this laptop because C: is nearly full.
+These commands are identical in PowerShell, cmd and bash. `uv run` selects the project's Python 3.13 environment, so nothing needs activating. On Windows, `.\guesser-data.ps1 <command>` is an optional shortcut for `uv run --frozen guesser-data <command>` that also points uv's cache and temp files under `.local/`.
+
+Use uv to change dependencies and keep `pyproject.toml`/`uv.lock` together. Output defaults to `.local/data/production/`; `--data-root` can point at any drive, so choose one with enough free space.
 
 ## Read the files in this order
 
@@ -44,11 +42,13 @@ Load:    05 read one drawing -> 06 cut -> render -> preprocess -> one image + cl
 
 ## Normal workflow
 
-```powershell
-.\guesser-data.ps1 download
-.\guesser-data.ps1 prepare
-.\guesser-data.ps1 preview   # optional
-.\guesser-data.ps1 export
+Annotated commands below work in PowerShell and bash. In Windows Command Prompt (cmd), omit `#` comments; the command text is unchanged.
+
+```sh
+uv run --frozen guesser-data download
+uv run --frozen guesser-data prepare
+uv run --frozen guesser-data preview   # optional: training-only contact sheets
+uv run --frozen guesser-data export
 ```
 
 ### Choose a dataset size
@@ -63,11 +63,11 @@ All three training profiles keep all 345 categories. Counts below are original d
 
 Omitting `--profile` keeps `production`. To download less and train on a smaller dataset, use the same profile for each command:
 
-```powershell
-.\guesser-data.ps1 download --profile medium
-.\guesser-data.ps1 prepare --profile medium
-.\guesser-data.ps1 preview --profile medium   # optional
-.\guesser-data.ps1 export --profile medium
+```sh
+uv run --frozen guesser-data download --profile medium
+uv run --frozen guesser-data prepare --profile medium
+uv run --frozen guesser-data preview --profile medium
+uv run --frozen guesser-data export --profile medium
 ```
 
 Replace `medium` with `small` for the smallest training dataset. Each size has its own `.local/data/<profile>/` folder and profile-named archives. Command results show the profile and target counts. `--candidates` can explicitly enlarge that profile's reserve.
@@ -80,21 +80,21 @@ Optional drawing exclusions go in `<data-root>/<profile>/excluded-ids.txt`, one 
 
 If preparation reports a shortage, explicitly enlarge the affected reserve, then prepare again:
 
-```powershell
-.\guesser-data.ps1 download --profile medium --class "cat" --candidates 3200
-.\guesser-data.ps1 prepare --profile medium
+```sh
+uv run --frozen guesser-data download --profile medium --class "cat" --candidates 3200
+uv run --frozen guesser-data prepare --profile medium
 ```
 
 See [the runbook](RUNBOOK.md) for transfer, loading and preprocessing examples.
 
 ## Small examples and supporting commands
 
-```powershell
-.\guesser-data.ps1 example        # one synthetic class; offline; separate example directory
-.\guesser-data.ps1 probe          # explicit small real-source ranges; separate probe directory
+```sh
+uv run --frozen guesser-data example   # synthetic class; offline; separate directory
+uv run --frozen guesser-data probe     # small real-source ranges; uses the network
 ```
 
-Examples/probes default to the smoke profile (16/2/2 originals/class), are marked nonproduction, and do not establish recognition accuracy or production throughput. Prefix probes do not verify a whole source checksum. There is no global download budget.
+`example` creates one synthetic class offline in a separate example directory; `probe` requests small real-source ranges in a separate probe directory. Examples/probes default to the smoke profile (16/2/2 originals/class), are marked nonproduction, and do not establish recognition accuracy or production throughput. Prefix probes do not verify a whole source checksum. There is no global download budget.
 
 Other commands: `preflight`, `status`, `inventory`, and `audit`. Every command supports `--help`, `--data-root`, `--profile` and `--json`. Download also supports repeatable `--class`, `--candidates` and `--concurrency`. Old `scan`, `freeze`, `qa` and `validate` commands show replacement hints. Normal output is readable text; JSON is optional.
 
