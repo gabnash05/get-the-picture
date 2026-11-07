@@ -8,6 +8,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from .data_environment import require_data_environment
+
 
 def data_profile(profile: str | None = None) -> dict[str, Any]:
     """Read the selected profile contract in the data project's own environment."""
@@ -15,6 +17,9 @@ def data_profile(profile: str | None = None) -> dict[str, Any]:
 
     source_path = module_source_path("dataset_audit_workflow.py")
     data_project = source_path.parents[2].parent / "data"
+    repository_root = data_project.parents[2]
+    # Report an unsynced data environment directly instead of uv's spawn error.
+    require_data_environment(data_project, cwd=repository_root)
     # Query settings without syncing or importing Python 3.13 code into this kernel.
     query = """
 import json, sys
@@ -44,7 +49,7 @@ print(json.dumps({
             query,
             "" if profile is None else profile,
         ],
-        cwd=data_project.parents[2],
+        cwd=repository_root,
         check=True,
         capture_output=True,
         text=True,
