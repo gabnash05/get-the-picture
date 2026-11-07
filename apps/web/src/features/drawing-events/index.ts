@@ -52,6 +52,7 @@ export function createDrawingBatcher(
     const batch: DrawingBatch = {
       transport: options.transport ?? "console",
       ...(options.streamId ? { streamId: options.streamId } : {}),
+      ...(options.generation !== undefined ? { generation: options.generation } : {}),
       batchId: `${instanceId}-${++batchNumber}`,
       roomCode: options.roomCode,
       canvasId: options.canvasId,
