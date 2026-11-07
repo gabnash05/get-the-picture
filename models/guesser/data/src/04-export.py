@@ -19,7 +19,6 @@ from .common import (
 )
 from .settings import PACKAGE_ROOT, Settings
 
-
 _download = load_step("01-download")
 clean_record = _download.clean_record
 trajectory_hash = _download.trajectory_hash
@@ -172,9 +171,7 @@ def _audit_impl(settings, connection):
             counts[class_id][split] += 1
             processed += 1
             if processed % 100_000 == 0:
-                progress(
-                    "export", f"audited {split} {processed:,}/{total_rows:,} rows"
-                )
+                progress("export", f"audited {split} {processed:,}/{total_rows:,} rows")
     for relative, end in offsets.items():
         if (base / "prepared" / relative).stat().st_size != end:
             raise DataError("Unindexed record data", "audit_failed")
@@ -257,7 +254,9 @@ def export_dataset(settings: Settings, output_dir: str | Path | None = None) -> 
                     archive.write(source, f"prepared/records/{split}/{source.name}")
         os.replace(temporary, path)
         results[role] = {"path": str(path), "sha256": file_hash(path)}
-        progress("export", f"wrote {path.name} ({path.stat().st_size / 1024**2:,.1f} MiB)")
+        progress(
+            "export", f"wrote {path.name} ({path.stat().st_size / 1024**2:,.1f} MiB)"
+        )
     atomic_json(output / "checksums.json", results)
     progress("export", f"checksums written to {output / 'checksums.json'}")
     return results
