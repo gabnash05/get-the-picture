@@ -14,14 +14,13 @@ from .common import (
     candidate_path,
     file_hash,
     json_bytes,
-    load_step,
     labels,
+    load_step,
     priority,
     progress,
     read_json,
 )
 from .settings import PACKAGE_ROOT, Settings
-
 
 _download = load_step("01-download")
 clean_record = _download.clean_record
@@ -146,7 +145,8 @@ def _summary(
                     "candidate_sha256",
                     "candidate_count",
                     "keep",
-                ) + (
+                )
+                + (
                     ("profile", "sampling_method", "complete", "full_source_verified")
                     if settings.download_method == "prefix"
                     else ()
@@ -365,7 +365,9 @@ def prepare(settings: Settings) -> dict:
                 writers[split] = pq.ParquetWriter(
                     manifest_dir / f"{split}.parquet.part", schema
                 )
-            progress("prepare", f"writing split records and manifests for {total} classes")
+            progress(
+                "prepare", f"writing split records and manifests for {total} classes"
+            )
             for index, item in enumerate(classes, start=1):
                 cid = item["class_id"]
                 counts[cid] = {}
