@@ -614,7 +614,9 @@ def download(
             try:
                 with _open_source(meta) as response:
                     if partial:
-                        rows, stats = sample_partial_stream(response, meta, settings, keep)
+                        rows, stats = sample_partial_stream(
+                            response, meta, settings, keep
+                        )
                     else:
                         rows, stats = sample_full_stream(response, meta, settings, keep)
                 return save_candidates(
